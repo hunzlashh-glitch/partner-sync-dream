@@ -84,6 +84,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "CrestPoint Management CRM — shared landlord and tenant workspace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "CrestPoint CRM" },
+      { name: "twitter:description", content: "CrestPoint Management CRM — shared landlord and tenant workspace." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a86f839e-f0e1-42c9-9deb-2f522520324d/id-preview-29775145--f1b4412e-6f09-409c-91be-aadae53d0616.lovable.app-1784216332516.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a86f839e-f0e1-42c9-9deb-2f522520324d/id-preview-29775145--f1b4412e-6f09-409c-91be-aadae53d0616.lovable.app-1784216332516.png" },
     ],
     links: [
       {
