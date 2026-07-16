@@ -388,6 +388,33 @@
   <div style="color:var(--text-faint); font-size:12.5px;">Loading CrestPoint CRM…</div>
 </div>
 
+<div id="authGate" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+  <div style="width:100%; max-width:380px; background:var(--bg-elev); border:1px solid var(--border); border-radius:14px; padding:28px; box-shadow:var(--shadow);">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--accent);color:#0c0e12;display:flex;align-items:center;justify-content:center;font-weight:700;">CP</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;">CrestPoint CRM</div>
+        <div style="font-size:11.5px;color:var(--text-faint);">Shared workspace login</div>
+      </div>
+    </div>
+    <div id="authTabs" style="display:flex;gap:4px;margin:18px 0 14px 0;border-bottom:1px solid var(--border);">
+      <button data-tab="signin" class="auth-tab active" style="flex:1;background:transparent;border:none;color:var(--text);padding:10px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid var(--accent);">Sign in</button>
+      <button data-tab="signup" class="auth-tab" style="flex:1;background:transparent;border:none;color:var(--text-dim);padding:10px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;">Create account</button>
+    </div>
+    <form id="authForm" autocomplete="on">
+      <label style="display:block;font-size:11.5px;color:var(--text-dim);margin-bottom:6px;">Email</label>
+      <input type="email" id="authEmail" required autocomplete="email" style="width:100%;padding:10px 12px;background:var(--bg-elev-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;margin-bottom:12px;">
+      <label style="display:block;font-size:11.5px;color:var(--text-dim);margin-bottom:6px;">Password</label>
+      <input type="password" id="authPassword" required minlength="6" autocomplete="current-password" style="width:100%;padding:10px 12px;background:var(--bg-elev-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;margin-bottom:14px;">
+      <div id="authError" style="display:none;color:var(--red);font-size:12px;margin-bottom:12px;"></div>
+      <button type="submit" id="authSubmit" style="width:100%;background:var(--accent);color:#0c0e12;border:none;padding:11px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;">Sign in</button>
+    </form>
+    <p style="margin:14px 0 0 0;font-size:11px;color:var(--text-faint);line-height:1.5;">
+      Data is stored in a shared cloud database. Anyone signed in can view and edit the same landlords, tenants, templates, and settings.
+    </p>
+  </div>
+</div>
+
 <div id="app" style="display:none;">
   <!-- SIDEBAR -->
   <aside id="sidebar">
