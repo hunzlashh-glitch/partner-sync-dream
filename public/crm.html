@@ -6,6 +6,7 @@
 <title>CrestPoint CRM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root{
     --bg:#0c0e12;
@@ -401,7 +402,8 @@
     <div class="sidebar-foot">
       CrestPoint Management<br>
       020 4578 9428<br><br>
-      <span style="opacity:.8;">Saved in this browser — use Settings to back up or transfer data</span>
+      <span style="opacity:.8;" id="signedInAs">Shared cloud database</span><br><br>
+      <button id="signOutBtn" style="background:transparent;border:1px solid var(--border-light);color:var(--text-dim);padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px;">Sign out</button>
     </div>
   </aside>
 
