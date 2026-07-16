@@ -1,0 +1,2256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrestPoint CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{
+    --bg:#0c0e12;
+    --bg-elev:#14171d;
+    --bg-elev-2:#1a1e26;
+    --bg-elev-3:#20242e;
+    --border:#252a34;
+    --border-light:#323847;
+    --text:#e7e9ee;
+    --text-dim:#98a0ad;
+    --text-faint:#5c6472;
+    --accent:#3fb8ac;
+    --accent-strong:#2f9c91;
+    --accent-soft:rgba(63,184,172,0.12);
+    --gold:#c9a15a;
+    --gold-soft:rgba(201,161,90,0.12);
+    --red:#e5686a;
+    --red-soft:rgba(229,104,106,0.12);
+    --amber:#d6a24a;
+    --amber-soft:rgba(214,162,74,0.12);
+    --green:#4fb87e;
+    --green-soft:rgba(79,184,126,0.12);
+    --purple:#8f82d9;
+    --purple-soft:rgba(143,130,217,0.12);
+    --blue:#5b8def;
+    --blue-soft:rgba(91,141,239,0.12);
+    --gray:#7a8291;
+    --gray-soft:rgba(122,130,145,0.12);
+    --radius-sm:6px;
+    --radius:10px;
+    --radius-lg:14px;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --shadow: 0 8px 24px rgba(0,0,0,0.35);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.25);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font);
+    font-size:14px;
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  ::selection{ background:var(--accent-soft); color:var(--text); }
+
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:var(--border-light); border-radius:10px; border:2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover{ background:#3d4454; }
+
+  button{ font-family:inherit; }
+  input, select, textarea{ font-family:inherit; }
+
+  a{ color:var(--accent); }
+
+  /* ---------- App shell ---------- */
+  #app{ display:flex; height:100vh; width:100vw; }
+
+  /* Sidebar */
+  #sidebar{
+    width:236px;
+    flex-shrink:0;
+    background:var(--bg-elev);
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    padding:20px 14px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:6px 8px 22px 8px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:16px;
+  }
+  .brand-mark{
+    width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(145deg, var(--accent), var(--accent-strong));
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800; font-size:15px; color:#04211d;
+    flex-shrink:0;
+    box-shadow: 0 3px 10px rgba(63,184,172,0.25);
+  }
+  .brand-text{ line-height:1.2; }
+  .brand-text .name{ font-weight:700; font-size:14.5px; letter-spacing:.2px; }
+  .brand-text .sub{ font-size:11px; color:var(--text-faint); font-weight:500; }
+
+  nav.navlist{ display:flex; flex-direction:column; gap:2px; flex:1; }
+  .navitem{
+    display:flex; align-items:center; gap:11px;
+    padding:9px 11px;
+    border-radius:var(--radius-sm);
+    color:var(--text-dim);
+    cursor:pointer;
+    font-weight:500;
+    font-size:13.5px;
+    transition: background .12s ease, color .12s ease;
+    user-select:none;
+    border:1px solid transparent;
+  }
+  .navitem svg{ width:17px; height:17px; flex-shrink:0; opacity:.85; }
+  .navitem:hover{ background:var(--bg-elev-2); color:var(--text); }
+  .navitem.active{
+    background:var(--accent-soft);
+    color:var(--accent);
+    border-color:rgba(63,184,172,0.25);
+  }
+  .navitem.active svg{ opacity:1; }
+  .nav-count{
+    margin-left:auto;
+    font-size:11px;
+    font-weight:600;
+    color:var(--text-faint);
+    background:var(--bg-elev-3);
+    padding:1px 7px;
+    border-radius:20px;
+  }
+  .navitem.active .nav-count{ background:rgba(63,184,172,0.18); color:var(--accent); }
+
+  .sidebar-foot{
+    border-top:1px solid var(--border);
+    padding-top:12px;
+    margin-top:8px;
+    font-size:11px;
+    color:var(--text-faint);
+    padding-left:8px;
+    line-height:1.5;
+  }
+
+  /* Main */
+  #main{ flex:1; display:flex; flex-direction:column; min-width:0; }
+  #topbar{
+    height:60px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 26px;
+    border-bottom:1px solid var(--border);
+    background:var(--bg);
+  }
+  #topbar .titles h1{ font-size:16.5px; font-weight:700; margin:0; letter-spacing:.1px; }
+  #topbar .titles p{ font-size:12px; color:var(--text-faint); margin:1px 0 0 0; }
+  #topbar .top-actions{ display:flex; gap:10px; align-items:center; }
+
+  #view-container{ flex:1; overflow-y:auto; padding:24px 26px 60px 26px; }
+  .view{ display:none; animation: fadein .18s ease; }
+  .view.active{ display:block; }
+  @keyframes fadein{ from{ opacity:0; transform:translateY(3px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    display:inline-flex; align-items:center; gap:7px;
+    padding:8px 14px;
+    border-radius:var(--radius-sm);
+    border:1px solid var(--border-light);
+    background:var(--bg-elev-2);
+    color:var(--text);
+    font-size:13px; font-weight:600;
+    cursor:pointer;
+    transition: background .12s ease, border-color .12s ease, transform .05s ease;
+    white-space:nowrap;
+  }
+  .btn svg{ width:14px; height:14px; }
+  .btn:hover{ background:var(--bg-elev-3); border-color:#3d4454; }
+  .btn:active{ transform:translateY(1px); }
+  .btn-primary{ background:var(--accent); border-color:var(--accent); color:#062824; }
+  .btn-primary:hover{ background:var(--accent-strong); border-color:var(--accent-strong); }
+  .btn-ghost{ background:transparent; border-color:transparent; color:var(--text-dim); }
+  .btn-ghost:hover{ background:var(--bg-elev-2); color:var(--text); }
+  .btn-danger{ background:transparent; border-color:var(--border-light); color:var(--red); }
+  .btn-danger:hover{ background:var(--red-soft); border-color:var(--red); }
+  .btn-sm{ padding:5px 10px; font-size:12px; }
+  .btn-block{ width:100%; justify-content:center; }
+  .btn[disabled]{ opacity:.5; cursor:not-allowed; }
+  .icon-btn{
+    width:30px;height:30px; display:inline-flex; align-items:center;justify-content:center;
+    border-radius:var(--radius-sm); border:1px solid transparent; background:transparent;
+    color:var(--text-dim); cursor:pointer; transition: all .12s ease;
+  }
+  .icon-btn:hover{ background:var(--bg-elev-3); color:var(--text); border-color:var(--border-light); }
+  .icon-btn svg{ width:15px; height:15px; }
+
+  /* ---------- Cards / sections ---------- */
+  .card{
+    background:var(--bg-elev);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:20px;
+  }
+  .section-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; flex-wrap:wrap; }
+  .section-head h2{ font-size:14.5px; margin:0; font-weight:700; }
+  .section-head .sub{ font-size:12px; color:var(--text-faint); margin-top:2px; }
+
+  /* KPI cards */
+  .kpi-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); gap:14px; margin-bottom:22px; }
+  .kpi{
+    background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:17px 18px; position:relative; overflow:hidden;
+  }
+  .kpi .label{ font-size:11.5px; color:var(--text-faint); font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+  .kpi .value{ font-size:26px; font-weight:800; margin-top:8px; letter-spacing:-.5px; }
+  .kpi .delta{ font-size:11.5px; color:var(--text-dim); margin-top:5px; }
+  .kpi .accent-bar{ position:absolute; left:0; top:0; bottom:0; width:3px; }
+
+  /* ---------- Forms ---------- */
+  .form-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:14px 16px; }
+  .form-grid.cols-3{ grid-template-columns:repeat(3, 1fr); }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field.span-2{ grid-column: span 2; }
+  .field.span-3{ grid-column: span 3; }
+  .field label{ font-size:12px; font-weight:600; color:var(--text-dim); }
+  .field .hint{ font-size:11px; color:var(--text-faint); }
+  input[type=text], input[type=email], input[type=tel], input[type=number], input[type=date], select, textarea{
+    background:var(--bg-elev-2);
+    border:1px solid var(--border-light);
+    border-radius:var(--radius-sm);
+    padding:9px 11px;
+    color:var(--text);
+    font-size:13.5px;
+    outline:none;
+    transition: border-color .12s ease, background .12s ease;
+    width:100%;
+  }
+  textarea{ resize:vertical; min-height:64px; line-height:1.5; }
+  input:focus, select:focus, textarea:focus{ border-color:var(--accent); background:var(--bg-elev-3); }
+  input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, .navitem:focus-visible{
+    outline:2px solid var(--accent); outline-offset:1px;
+  }
+  select{ appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2398a0ad'><path d='M5.5 7.5l4.5 4.5 4.5-4.5' stroke='%2398a0ad' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>"); background-repeat:no-repeat; background-position:right 10px center; padding-right:30px; }
+
+  .check-row{ display:flex; align-items:center; gap:8px; padding:9px 2px; }
+  .check-row input[type=checkbox]{ width:16px; height:16px; accent-color:var(--accent); cursor:pointer; }
+  .check-row label{ font-size:13px; color:var(--text); font-weight:500; cursor:pointer; }
+  .checks-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:2px 12px; }
+
+  .form-divider{ grid-column:1/-1; border-top:1px solid var(--border); margin:4px 0 2px 0; padding-top:14px; font-size:11.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-faint); }
+
+  /* ---------- Tables ---------- */
+  .table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--bg-elev); }
+  table{ width:100%; border-collapse:collapse; font-size:13px; min-width:720px; }
+  thead th{
+    text-align:left; padding:11px 14px; font-size:11px; text-transform:uppercase; letter-spacing:.4px;
+    color:var(--text-faint); font-weight:700; border-bottom:1px solid var(--border);
+    background:var(--bg-elev-2); position:sticky; top:0; cursor:pointer; user-select:none; white-space:nowrap;
+  }
+  thead th:hover{ color:var(--text-dim); }
+  thead th .sort-arrow{ margin-left:4px; opacity:.6; font-size:10px; }
+  tbody td{ padding:11px 14px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; white-space:nowrap; }
+  tbody tr{ transition: background .1s ease; }
+  tbody tr:hover{ background:var(--bg-elev-2); }
+  tbody tr:last-child td{ border-bottom:none; }
+  .cell-dim{ color:var(--text-faint); }
+  .cell-mono{ font-family:var(--mono); font-size:12px; }
+  .row-actions{ display:flex; gap:5px; }
+
+  .empty-state{ padding:56px 20px; text-align:center; color:var(--text-faint); }
+  .empty-state .e-icon{ width:40px; height:40px; margin:0 auto 14px auto; opacity:.5; }
+  .empty-state h3{ color:var(--text-dim); font-size:14px; margin:0 0 5px 0; }
+  .empty-state p{ font-size:12.5px; margin:0; }
+
+  /* Status badges */
+  .badge{
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 9px; border-radius:20px; font-size:11.5px; font-weight:700;
+    white-space:nowrap;
+  }
+  .badge .dot{ width:6px;height:6px; border-radius:50%; }
+  .badge-freshdata{ background:var(--blue-soft); color:var(--blue); }
+  .badge-confirmed{ background:var(--green-soft); color:var(--green); }
+  .badge-callback{ background:var(--amber-soft); color:var(--amber); }
+  .badge-voicemail{ background:var(--purple-soft); color:var(--purple); }
+  .badge-notinterested{ background:var(--gray-soft); color:var(--gray); }
+  .badge-rejection{ background:var(--red-soft); color:var(--red); }
+  .badge-received{ background:var(--accent-soft); color:var(--accent); }
+
+  /* Toolbar (search/filter) */
+  .toolbar{ display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+  .search-box{ position:relative; flex:1; min-width:220px; max-width:340px; }
+  .search-box svg{ position:absolute; left:11px; top:50%; transform:translateY(-50%); width:14px; height:14px; color:var(--text-faint); }
+  .search-box input{ padding-left:32px; }
+  .toolbar select{ width:auto; min-width:150px; }
+  .toolbar-spacer{ flex:1; }
+
+  /* Modal */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(6,8,11,0.7); backdrop-filter:blur(2px);
+    display:none; align-items:flex-start; justify-content:center; z-index:100; padding:40px 20px; overflow-y:auto;
+  }
+  .modal-overlay.active{ display:flex; }
+  .modal{
+    background:var(--bg-elev); border:1px solid var(--border-light); border-radius:var(--radius-lg);
+    width:100%; max-width:760px; box-shadow:var(--shadow); animation: modalIn .16s ease;
+    margin-bottom:40px;
+  }
+  @keyframes modalIn{ from{ opacity:0; transform:translateY(8px) scale(.99);} to{opacity:1; transform:translateY(0) scale(1);} }
+  .modal.modal-sm{ max-width:480px; }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--border); }
+  .modal-head h3{ margin:0; font-size:15px; font-weight:700; }
+  .modal-body{ padding:22px; max-height:70vh; overflow-y:auto; }
+  .modal-foot{ display:flex; justify-content:flex-end; gap:10px; padding:16px 22px; border-top:1px solid var(--border); }
+  .modal-foot .foot-left{ margin-right:auto; display:flex; gap:10px; }
+
+  /* Toast */
+  #toast-container{ position:fixed; bottom:22px; right:22px; display:flex; flex-direction:column; gap:8px; z-index:200; }
+  .toast{
+    background:var(--bg-elev-3); border:1px solid var(--border-light); color:var(--text);
+    padding:11px 16px; border-radius:var(--radius-sm); font-size:13px; font-weight:500;
+    box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:9px; animation: toastIn .18s ease;
+    min-width:200px;
+  }
+  @keyframes toastIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+  .toast.success{ border-color:rgba(79,184,126,0.4); }
+  .toast.success .t-dot{ background:var(--green); }
+  .toast.error{ border-color:rgba(229,104,106,0.4); }
+  .toast.error .t-dot{ background:var(--red); }
+  .t-dot{ width:7px; height:7px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+
+  /* Confirm dialog reuse of modal-sm */
+  .confirm-text{ font-size:13.5px; color:var(--text-dim); line-height:1.6; }
+
+  /* Detail panel (read-only quick view) */
+  .detail-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px 22px; }
+  .detail-item{ padding:8px 0; border-bottom:1px solid var(--border); }
+  .detail-item .k{ font-size:11px; text-transform:uppercase; letter-spacing:.3px; color:var(--text-faint); font-weight:700; margin-bottom:3px; }
+  .detail-item .v{ font-size:13.5px; color:var(--text); }
+
+  /* Templates */
+  .tpl-card{ background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px; margin-bottom:14px; }
+  .tpl-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .tpl-head .tpl-title{ display:flex; align-items:center; gap:10px; }
+  .tpl-head h4{ margin:0; font-size:13.5px; font-weight:700; }
+  .tpl-placeholders{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .chip{ background:var(--bg-elev-3); border:1px solid var(--border-light); color:var(--text-dim); font-family:var(--mono); font-size:11px; padding:3px 8px; border-radius:5px; }
+  .tpl-foot{ display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
+  .signature-preview{ font-size:12px; color:var(--text-faint); background:var(--bg-elev-2); border:1px dashed var(--border-light); border-radius:var(--radius-sm); padding:10px 12px; margin-top:10px; white-space:pre-line; line-height:1.6; }
+
+  /* Fresh data quick entry */
+  .quick-entry-toggle{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+
+  /* Settings */
+  .settings-section{ margin-bottom:22px; }
+  .settings-row{ display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--border); gap:20px; }
+  .settings-row:last-child{ border-bottom:none; }
+  .settings-row .s-label{ font-size:13.5px; font-weight:600; }
+  .settings-row .s-desc{ font-size:12px; color:var(--text-faint); margin-top:2px; max-width:420px; }
+  .settings-row .s-control{ flex-shrink:0; width:220px; }
+
+  .danger-zone{ border:1px solid rgba(229,104,106,0.3); background:var(--red-soft); border-radius:var(--radius-lg); padding:18px; }
+
+  .money{ font-family:var(--mono); font-weight:600; color:var(--gold); }
+  .link-like{ color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600; }
+  .link-like:hover{ text-decoration:underline; }
+
+  .loading-screen{ position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:999; flex-direction:column; gap:14px; }
+  .spinner{ width:26px; height:26px; border:2.5px solid var(--border-light); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .status-select-inline{ padding:5px 8px; font-size:12px; }
+
+  .shared-note{ font-size:11px; color:var(--text-faint); display:flex; align-items:center; gap:6px; }
+
+  @media (max-width: 880px){
+    #sidebar{ display:none; }
+    .form-grid, .form-grid.cols-3{ grid-template-columns:1fr; }
+    .field.span-2, .field.span-3{ grid-column:span 1; }
+    .checks-grid{ grid-template-columns:1fr; }
+    .detail-grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <div style="color:var(--text-faint); font-size:12.5px;">Loading CrestPoint CRM…</div>
+</div>
+
+<div id="authGate" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+  <div style="width:100%; max-width:380px; background:var(--bg-elev); border:1px solid var(--border); border-radius:14px; padding:28px; box-shadow:var(--shadow);">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--accent);color:#0c0e12;display:flex;align-items:center;justify-content:center;font-weight:700;">CP</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;">CrestPoint CRM</div>
+        <div style="font-size:11.5px;color:var(--text-faint);">Shared workspace login</div>
+      </div>
+    </div>
+    <div id="authTabs" style="display:flex;gap:4px;margin:18px 0 14px 0;border-bottom:1px solid var(--border);">
+      <button data-tab="signin" class="auth-tab active" style="flex:1;background:transparent;border:none;color:var(--text);padding:10px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid var(--accent);">Sign in</button>
+      <button data-tab="signup" class="auth-tab" style="flex:1;background:transparent;border:none;color:var(--text-dim);padding:10px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;">Create account</button>
+    </div>
+    <form id="authForm" autocomplete="on">
+      <label style="display:block;font-size:11.5px;color:var(--text-dim);margin-bottom:6px;">Email</label>
+      <input type="email" id="authEmail" required autocomplete="email" style="width:100%;padding:10px 12px;background:var(--bg-elev-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;margin-bottom:12px;">
+      <label style="display:block;font-size:11.5px;color:var(--text-dim);margin-bottom:6px;">Password</label>
+      <input type="password" id="authPassword" required minlength="6" autocomplete="current-password" style="width:100%;padding:10px 12px;background:var(--bg-elev-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;margin-bottom:14px;">
+      <div id="authError" style="display:none;color:var(--red);font-size:12px;margin-bottom:12px;"></div>
+      <button type="submit" id="authSubmit" style="width:100%;background:var(--accent);color:#0c0e12;border:none;padding:11px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;">Sign in</button>
+    </form>
+    <p style="margin:14px 0 0 0;font-size:11px;color:var(--text-faint);line-height:1.5;">
+      Data is stored in a shared cloud database. Anyone signed in can view and edit the same landlords, tenants, templates, and settings.
+    </p>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">CP</div>
+      <div class="brand-text">
+        <div class="name">CrestPoint</div>
+        <div class="sub">Management CRM</div>
+      </div>
+    </div>
+    <nav class="navlist" id="navlist"></nav>
+    <div class="sidebar-foot">
+      CrestPoint Management<br>
+      020 4578 9428<br><br>
+      <span style="opacity:.8;" id="signedInAs">Shared cloud database</span><br><br>
+      <button id="signOutBtn" style="background:transparent;border:1px solid var(--border-light);color:var(--text-dim);padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px;">Sign out</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main">
+    <div id="topbar">
+      <div class="titles">
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="pageSubtitle">Overview of your business</p>
+      </div>
+      <div class="top-actions" id="topActions"></div>
+    </div>
+    <div id="view-container">
+      <div class="view" id="view-dashboard"></div>
+      <div class="view" id="view-freshdata"></div>
+      <div class="view" id="view-landlords"></div>
+      <div class="view" id="view-tenants"></div>
+      <div class="view" id="view-templates"></div>
+      <div class="view" id="view-settings"></div>
+    </div>
+  </main>
+</div>
+
+<div id="modal-root"></div>
+<div id="toast-container"></div>
+
+<script>
+/* =========================================================================
+   CrestPoint CRM — Application Logic
+   Plain JavaScript, no framework, no build step.
+   Data persists via window.storage, backed by the browser's localStorage
+   so this file runs completely standalone — no server, no external runtime.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------
+   STORAGE POLYFILL
+   Provides the same get/set/delete/list interface the app relies on,
+   implemented entirely with localStorage so the exported file works when
+   opened directly in a browser with no other backend or runtime present.
+   Data is stored per-browser under a namespaced key so it won't collide
+   with anything else on the same origin.
+--------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------
+   CLOUD STORAGE (Supabase-backed kv_store)
+   All authenticated users share the same rows in the `kv_store` table,
+   so you and your partner see and edit the same data from any PC.
+--------------------------------------------------------------------- */
+const SUPABASE_URL = "https://hjkvtpjlxxqkjcyutdor.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_HtI5RYzn4PZXYlU1pXZ9Yw_pPlkqqAC";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, storageKey: "crestpoint_auth" }
+});
+
+window.storage = {
+  async get(key) {
+    const { data, error } = await sb.from("kv_store").select("value").eq("key", key).maybeSingle();
+    if (error) { console.error("storage.get", error); return null; }
+    if (!data) return null;
+    // value is JSONB; the CRM code stores JSON strings, so re-stringify for compatibility.
+    return { key, value: typeof data.value === "string" ? data.value : JSON.stringify(data.value), shared: true };
+  },
+  async set(key, value) {
+    let parsed = value;
+    try { parsed = JSON.parse(value); } catch (e) { /* keep as string */ }
+    const user = (await sb.auth.getUser()).data.user;
+    const { error } = await sb.from("kv_store").upsert(
+      { key, value: parsed, updated_at: new Date().toISOString(), updated_by: user ? user.id : null },
+      { onConflict: "key" }
+    );
+    if (error) { console.error("storage.set", error); return null; }
+    return { key, value, shared: true };
+  },
+  async delete(key) {
+    const { error } = await sb.from("kv_store").delete().eq("key", key);
+    if (error) { console.error("storage.delete", error); return null; }
+    return { key, deleted: true, shared: true };
+  },
+  async list() {
+    const { data, error } = await sb.from("kv_store").select("key");
+    if (error) { console.error("storage.list", error); return null; }
+    return { keys: (data || []).map(r => r.key), shared: true };
+  }
+};
+
+/* ---------------------------------------------------------------------
+   AUTH GATE — email/password, shared workspace
+--------------------------------------------------------------------- */
+async function showAuthGate() {
+  document.getElementById("loadingScreen").style.display = "none";
+  document.getElementById("app").style.display = "none";
+  const gate = document.getElementById("authGate");
+  gate.style.display = "flex";
+
+  let mode = "signin";
+  const tabs = gate.querySelectorAll(".auth-tab");
+  const submit = document.getElementById("authSubmit");
+  const errBox = document.getElementById("authError");
+  const pwd = document.getElementById("authPassword");
+
+  tabs.forEach(t => {
+    t.onclick = () => {
+      mode = t.dataset.tab;
+      tabs.forEach(x => {
+        const active = x.dataset.tab === mode;
+        x.style.color = active ? "var(--text)" : "var(--text-dim)";
+        x.style.borderBottomColor = active ? "var(--accent)" : "transparent";
+      });
+      submit.textContent = mode === "signin" ? "Sign in" : "Create account";
+      pwd.autocomplete = mode === "signin" ? "current-password" : "new-password";
+      errBox.style.display = "none";
+    };
+  });
+
+  document.getElementById("authForm").onsubmit = async (e) => {
+    e.preventDefault();
+    errBox.style.display = "none";
+    submit.disabled = true;
+    submit.textContent = mode === "signin" ? "Signing in…" : "Creating…";
+    const email = document.getElementById("authEmail").value.trim();
+    const password = pwd.value;
+    try {
+      const fn = mode === "signin" ? sb.auth.signInWithPassword({ email, password })
+                                   : sb.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + "/crm.html" } });
+      const { data, error } = await fn;
+      if (error) throw error;
+      if (mode === "signup" && !data.session) {
+        errBox.textContent = "Account created. Check your email to confirm, then sign in.";
+        errBox.style.color = "var(--green)";
+        errBox.style.display = "block";
+        submit.disabled = false;
+        submit.textContent = "Create account";
+        return;
+      }
+      gate.style.display = "none";
+      await bootApp();
+    } catch (err) {
+      errBox.textContent = err.message || "Something went wrong";
+      errBox.style.color = "var(--red)";
+      errBox.style.display = "block";
+      submit.disabled = false;
+      submit.textContent = mode === "signin" ? "Sign in" : "Create account";
+    }
+  };
+}
+
+async function bootApp() {
+  document.getElementById("loadingScreen").style.display = "flex";
+  const user = (await sb.auth.getUser()).data.user;
+  if (user) {
+    const el = document.getElementById("signedInAs");
+    if (el) el.textContent = "Signed in as " + user.email;
+  }
+  await init();
+}
+
+document.getElementById("signOutBtn").addEventListener("click", async () => {
+  await sb.auth.signOut();
+  location.reload();
+});
+
+/* ---------------------------------------------------------------------
+   CONSTANTS
+--------------------------------------------------------------------- */
+const STATUSES = ["Fresh Data", "Confirmed", "Call Back", "VoiceMail", "Not Interested", "Rejection", "Received"];
+
+const STATUS_CLASS = {
+  "Fresh Data": "badge-freshdata",
+  "Confirmed": "badge-confirmed",
+  "Call Back": "badge-callback",
+  "VoiceMail": "badge-voicemail",
+  "Not Interested": "badge-notinterested",
+  "Rejection": "badge-rejection",
+  "Received": "badge-received"
+};
+
+const PROPERTY_TYPES = ["House", "Flat/Apartment", "Studio", "HMO", "Bungalow", "Maisonette", "Other"];
+const ROOM_TYPES = ["Whole Property", "Single Room", "Double Room", "Twin Room", "Ensuite Room"];
+const FURNISHED_OPTIONS = ["Furnished", "Unfurnished", "Part-Furnished"];
+
+const DEFAULT_SIGNATURE = "CrestPoint Management\ninfo@crestpointmanagement.co.uk\n020 4578 9428 | 07307 223971";
+
+const DEFAULT_TEMPLATES = {
+  "Fresh Data": "Hi {{name}}, thank you for getting in touch with CrestPoint Management. We're reviewing your details now and will be in touch shortly to discuss the next steps.",
+  "Confirmed": "Hi {{name}}, great news — everything is now confirmed on our end. We'll keep you updated every step of the way.",
+  "Call Back": "Hi {{name}}, we tried to reach you earlier. When would be a good time for us to call you back?",
+  "VoiceMail": "Hi {{name}}, this is CrestPoint Management. We left you a voicemail — please call us back at your earliest convenience or reply here so we can assist further.",
+  "Not Interested": "Hi {{name}}, thank you for letting us know. If anything changes in future, we'd be happy to help. Wishing you all the best.",
+  "Rejection": "Hi {{name}}, thank you for your patience. Unfortunately we're unable to proceed at this time. Please don't hesitate to reach out if anything changes.",
+  "Received": "Hi {{name}}, we can confirm we've received the information we needed. Thank you — we'll be in touch shortly with next steps."
+};
+
+const DEFAULT_CONSENT_EMAIL = {
+  subject: "Consent to Proceed — {{door_number}} {{street}}, {{city}}",
+  body: "Dear {{name}},\n\nThank you for choosing CrestPoint Management to let your property at {{door_number}} {{street}}, {{city}} {{postcode}}.\n\nBy replying to this email, you confirm your consent for CrestPoint Management to market the above property on your behalf, including advertising, arranging viewings, and liaising with prospective tenants in accordance with our agreed terms.\n\nIf you have any questions before proceeding, please don't hesitate to get in touch.\n\nKind regards,"
+};
+
+const STATUS_PLACEHOLDERS = ["{{name}}"];
+const CONSENT_PLACEHOLDERS = ["{{name}}", "{{door_number}}", "{{street}}", "{{city}}", "{{postcode}}", "{{property_type}}", "{{monthly_rent}}", "{{bedrooms}}"];
+
+/* ---------------------------------------------------------------------
+   STATE
+--------------------------------------------------------------------- */
+const DB = {
+  landlords: [],
+  tenants: [],
+  templates: { statuses: { ...DEFAULT_TEMPLATES }, consentEmail: { ...DEFAULT_CONSENT_EMAIL } },
+  settings: { commissionRate: 100, signature: DEFAULT_SIGNATURE }
+};
+
+let currentView = "dashboard";
+const uiState = {
+  landlords: { search: "", status: "ALL", sortBy: "createdAt", sortDir: "desc" },
+  tenants: { search: "", status: "ALL", sortBy: "createdAt", sortDir: "desc" },
+  freshDataFormOpen: true,
+  tenantFormOpen: true
+};
+
+/* ---------------------------------------------------------------------
+   UTILITIES
+--------------------------------------------------------------------- */
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function fmtMoney(n) {
+  const num = Number(n) || 0;
+  return "£" + num.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function fmtDate(d) {
+  if (!d) return "—";
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return "—";
+  return dt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function fmtDateTime(d) {
+  if (!d) return "—";
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return "—";
+  return dt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) + " · " +
+    dt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+}
+
+function fullAddress(l) {
+  return [l.doorNumber, l.street, l.city, l.postcode].filter(Boolean).join(", ");
+}
+
+function debounce(fn, ms) {
+  let t;
+  return function (...args) {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
+function toast(msg, type = "success") {
+  const container = document.getElementById("toast-container");
+  const el = document.createElement("div");
+  el.className = "toast " + type;
+  el.innerHTML = `<span class="t-dot"></span><span>${escapeHtml(msg)}</span>`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = "opacity .25s ease, transform .25s ease";
+    el.style.opacity = "0";
+    el.style.transform = "translateY(6px)";
+    setTimeout(() => el.remove(), 260);
+  }, 2600);
+}
+
+/* ---------------------------------------------------------------------
+   PERSISTENCE (window.storage — backed by localStorage, see polyfill above)
+--------------------------------------------------------------------- */
+async function loadAll() {
+  const results = await Promise.allSettled([
+    window.storage.get("landlords", true),
+    window.storage.get("tenants", true),
+    window.storage.get("templates", true),
+    window.storage.get("settings", true)
+  ]);
+
+  if (results[0].status === "fulfilled" && results[0].value) {
+    try { DB.landlords = JSON.parse(results[0].value.value) || []; } catch (e) { DB.landlords = []; }
+  }
+  if (results[1].status === "fulfilled" && results[1].value) {
+    try { DB.tenants = JSON.parse(results[1].value.value) || []; } catch (e) { DB.tenants = []; }
+  }
+  if (results[2].status === "fulfilled" && results[2].value) {
+    try {
+      const parsed = JSON.parse(results[2].value.value);
+      if (parsed && parsed.statuses) DB.templates = parsed;
+    } catch (e) { /* keep defaults */ }
+  }
+  if (results[3].status === "fulfilled" && results[3].value) {
+    try {
+      const parsed = JSON.parse(results[3].value.value);
+      if (parsed) DB.settings = { ...DB.settings, ...parsed };
+    } catch (e) { /* keep defaults */ }
+  }
+}
+
+async function saveCollection(name) {
+  try {
+    const value = JSON.stringify(DB[name]);
+    const result = await window.storage.set(name, value, true);
+    if (!result) throw new Error("no result");
+    return true;
+  } catch (e) {
+    toast("Could not save — please try again", "error");
+    return false;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   ICONS (inline SVG, feather-style, stroke based)
+--------------------------------------------------------------------- */
+const ICONS = {
+  dashboard: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>`,
+  bolt: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>`,
+  building: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1"/><path d="M10 22v-4h4v4"/></svg>`,
+  users: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  message: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>`,
+  search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>`,
+  edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+  whatsapp: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.28-.14-1.65-.81-1.9-.9-.26-.1-.44-.14-.63.14-.19.28-.72.9-.88 1.08-.16.19-.32.21-.6.07-.28-.14-1.18-.44-2.25-1.4-.83-.74-1.4-1.66-1.56-1.94-.16-.28-.02-.43.12-.57.13-.13.28-.33.42-.5.14-.16.19-.28.28-.47.09-.19.05-.35-.02-.5-.07-.14-.63-1.53-.87-2.09-.23-.55-.46-.48-.63-.48-.16 0-.35-.02-.54-.02-.19 0-.5.07-.76.35-.26.28-1 1-1 2.42 0 1.43 1.03 2.82 1.18 3.01.14.19 2.03 3.1 4.92 4.35.69.3 1.22.48 1.64.61.69.22 1.31.19 1.81.11.55-.08 1.65-.68 1.89-1.33.23-.65.23-1.21.16-1.33-.07-.12-.26-.19-.54-.33z"/><path d="M12.02 2C6.5 2 2.03 6.48 2.03 12c0 1.87.51 3.62 1.4 5.13L2 22l5.02-1.4A9.94 9.94 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.19c-1.7 0-3.29-.47-4.65-1.29l-.33-.2-3.35.94.9-3.28-.22-.34a8.17 8.17 0 0 1-1.28-4.4c0-4.52 3.68-8.19 8.24-8.19a8.2 8.2 0 0 1 8.23 8.19c0 4.52-3.68 8.19-8.24 8.19z"/></svg>`,
+  mail: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 6 10-6"/></svg>`,
+  copy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
+  x: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>`,
+  chevronDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`,
+  download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>`,
+  upload: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>`,
+  alertTriangle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  phone: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+  eye: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+};
+
+/* ---------------------------------------------------------------------
+   NAVIGATION
+--------------------------------------------------------------------- */
+const NAV_ITEMS = [
+  { id: "dashboard", label: "Dashboard", icon: "dashboard", subtitle: "Overview of your business" },
+  { id: "freshdata", label: "Fresh Data", icon: "bolt", subtitle: "Fast entry & call queue" },
+  { id: "landlords", label: "Landlords", icon: "building", subtitle: "Full landlord & property database" },
+  { id: "tenants", label: "Tenants", icon: "users", subtitle: "Tenant database" },
+  { id: "templates", label: "Templates", icon: "message", subtitle: "WhatsApp & email templates" },
+  { id: "settings", label: "Settings", icon: "settings", subtitle: "Commission, signature & data" }
+];
+
+function renderNav() {
+  const nav = document.getElementById("navlist");
+  nav.innerHTML = NAV_ITEMS.map(item => {
+    let count = "";
+    if (item.id === "freshdata") count = DB.landlords.filter(l => l.status === "Fresh Data").length;
+    if (item.id === "landlords") count = DB.landlords.length;
+    if (item.id === "tenants") count = DB.tenants.length;
+    return `
+      <div class="navitem ${currentView === item.id ? "active" : ""}" data-nav="${item.id}" tabindex="0" role="button">
+        ${ICONS[item.icon]}
+        <span>${item.label}</span>
+        ${count !== "" ? `<span class="nav-count">${count}</span>` : ""}
+      </div>`;
+  }).join("");
+
+  nav.querySelectorAll("[data-nav]").forEach(el => {
+    el.addEventListener("click", () => goToView(el.dataset.nav));
+    el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goToView(el.dataset.nav); } });
+  });
+}
+
+function goToView(viewId) {
+  currentView = viewId;
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-" + viewId).classList.add("active");
+
+  const item = NAV_ITEMS.find(n => n.id === viewId);
+  document.getElementById("pageTitle").textContent = item.label;
+  document.getElementById("pageSubtitle").textContent = item.subtitle;
+
+  renderNav();
+  renderTopActions();
+  renderCurrentView();
+}
+
+function renderTopActions() {
+  const el = document.getElementById("topActions");
+  if (currentView === "landlords") {
+    el.innerHTML = `<button class="btn btn-primary" id="btnAddLandlord">${ICONS.plus}Add Landlord</button>`;
+    document.getElementById("btnAddLandlord").addEventListener("click", () => openLandlordModal());
+  } else if (currentView === "tenants") {
+    el.innerHTML = `<button class="btn btn-primary" id="btnAddTenant">${ICONS.plus}Add Tenant</button>`;
+    document.getElementById("btnAddTenant").addEventListener("click", () => openTenantModal());
+  } else {
+    el.innerHTML = "";
+  }
+}
+
+function renderCurrentView() {
+  if (currentView === "dashboard") renderDashboard();
+  else if (currentView === "freshdata") renderFreshData();
+  else if (currentView === "landlords") renderLandlords();
+  else if (currentView === "tenants") renderTenants();
+  else if (currentView === "templates") renderTemplates();
+  else if (currentView === "settings") renderSettings();
+}
+
+/* ---------------------------------------------------------------------
+   DASHBOARD
+--------------------------------------------------------------------- */
+function renderDashboard() {
+  const el = document.getElementById("view-dashboard");
+  const total = DB.landlords.length;
+  const byStatus = {};
+  STATUSES.forEach(s => byStatus[s] = 0);
+  DB.landlords.forEach(l => { if (byStatus[l.status] !== undefined) byStatus[l.status]++; });
+
+  const totalRent = DB.landlords.reduce((sum, l) => sum + (Number(l.monthlyRent) || 0), 0);
+  const totalCommission = DB.landlords.reduce((sum, l) => sum + (Number(l.commission) || 0), 0);
+  const confirmedCommission = DB.landlords.filter(l => l.status === "Confirmed" || l.status === "Received")
+    .reduce((sum, l) => sum + (Number(l.commission) || 0), 0);
+
+  const recentFresh = [...DB.landlords]
+    .filter(l => l.status === "Fresh Data")
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 6);
+
+  const maxStatusCount = Math.max(1, ...Object.values(byStatus));
+
+  el.innerHTML = `
+    <div class="kpi-grid">
+      ${kpiCard("Total Landlords", total, "All records in the database", "accent")}
+      ${kpiCard("Needs Calling", byStatus["Fresh Data"], "Fresh Data awaiting first contact", "blue")}
+      ${kpiCard("Confirmed", byStatus["Confirmed"], "Landlords confirmed and live", "green")}
+      ${kpiCard("Total Tenants", DB.tenants.length, "Tenants in the database", "purple")}
+      ${kpiCard("Monthly Rent Value", fmtMoney(totalRent), "Sum across all landlord records", "gold")}
+      ${kpiCard("Commission (Confirmed)", fmtMoney(confirmedCommission), `Total pipeline: ${fmtMoney(totalCommission)}`, "gold")}
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1.3fr 1fr; gap:18px; align-items:start;">
+      <div class="card">
+        <div class="section-head">
+          <div>
+            <h2>Recent Fresh Data</h2>
+            <div class="sub">Newest leads awaiting a call</div>
+          </div>
+          <span class="link-like" id="viewAllFresh">View all →</span>
+        </div>
+        ${recentFresh.length === 0 ? emptyState("bolt", "No fresh leads yet", "New leads you add in Fresh Data will appear here.") :
+          `<div class="table-wrap" style="border:none;">
+            <table style="min-width:0;">
+              <thead><tr><th>Name</th><th>Address</th><th>Rent</th><th>Added</th></tr></thead>
+              <tbody>
+                ${recentFresh.map(l => `
+                  <tr class="clickable-row" data-open-landlord="${l.id}" style="cursor:pointer;">
+                    <td>${escapeHtml(l.name || "—")}</td>
+                    <td class="cell-dim">${escapeHtml(fullAddress(l)) || "—"}</td>
+                    <td class="money">${l.monthlyRent ? fmtMoney(l.monthlyRent) : "—"}</td>
+                    <td class="cell-dim">${fmtDate(l.createdAt)}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>`}
+      </div>
+
+      <div class="card">
+        <div class="section-head">
+          <div>
+            <h2>Pipeline by Status</h2>
+            <div class="sub">Where every landlord record stands</div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          ${STATUSES.map(s => `
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:5px;">
+                <span style="color:var(--text-dim); font-weight:600;">${s}</span>
+                <span style="color:var(--text-faint);">${byStatus[s]}</span>
+              </div>
+              <div style="height:6px; background:var(--bg-elev-2); border-radius:4px; overflow:hidden;">
+                <div style="height:100%; width:${(byStatus[s] / maxStatusCount) * 100}%; background:var(--accent); border-radius:4px;"></div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const viewAll = document.getElementById("viewAllFresh");
+  if (viewAll) viewAll.addEventListener("click", () => goToView("freshdata"));
+
+  el.querySelectorAll("[data-open-landlord]").forEach(row => {
+    row.addEventListener("click", () => openLandlordModal(row.dataset.openLandlord));
+  });
+}
+
+function kpiCard(label, value, delta, color) {
+  return `
+    <div class="kpi">
+      <div class="accent-bar" style="background:var(--${color});"></div>
+      <div class="label">${label}</div>
+      <div class="value">${value}</div>
+      <div class="delta">${delta}</div>
+    </div>`;
+}
+
+function emptyState(icon, title, desc) {
+  return `
+    <div class="empty-state">
+      <div class="e-icon">${ICONS[icon] || ICONS.bolt}</div>
+      <h3>${escapeHtml(title)}</h3>
+      <p>${escapeHtml(desc)}</p>
+    </div>`;
+}
+
+/* ---------------------------------------------------------------------
+   MODAL SYSTEM (generic open/close shell — content supplied per-use)
+--------------------------------------------------------------------- */
+function openModal(html, opts = {}) {
+  const root = document.getElementById("modal-root");
+  const size = opts.size === "sm" ? "modal-sm" : "";
+  root.innerHTML = `
+    <div class="modal-overlay active" id="activeModalOverlay">
+      <div class="modal ${size}">${html}</div>
+    </div>`;
+  const overlay = document.getElementById("activeModalOverlay");
+  overlay.addEventListener("mousedown", (e) => {
+    if (e.target === overlay && !opts.persistent) closeModal();
+  });
+  document.addEventListener("keydown", escCloseHandler);
+}
+
+function escCloseHandler(e) {
+  if (e.key === "Escape") closeModal();
+}
+
+function closeModal() {
+  document.getElementById("modal-root").innerHTML = "";
+  document.removeEventListener("keydown", escCloseHandler);
+}
+
+function confirmDialog({ title, message, confirmLabel = "Confirm", danger = true, onConfirm }) {
+  openModal(`
+    <div class="modal-head">
+      <h3>${escapeHtml(title)}</h3>
+      <button class="icon-btn" id="cdClose">${ICONS.x}</button>
+    </div>
+    <div class="modal-body">
+      <p class="confirm-text">${message}</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="cdCancel">Cancel</button>
+      <button class="btn ${danger ? "btn-danger" : "btn-primary"}" id="cdConfirm">${escapeHtml(confirmLabel)}</button>
+    </div>
+  `, { size: "sm" });
+  document.getElementById("cdClose").addEventListener("click", closeModal);
+  document.getElementById("cdCancel").addEventListener("click", closeModal);
+  document.getElementById("cdConfirm").addEventListener("click", () => { closeModal(); onConfirm(); });
+}
+
+/* ---------------------------------------------------------------------
+   LANDLORD FORM — shared markup builder (used by modal AND Fresh Data quick entry)
+--------------------------------------------------------------------- */
+function landlordFormFields(l = {}, idPrefix = "lf") {
+  const g = (key, fallback = "") => (l[key] !== undefined && l[key] !== null) ? l[key] : fallback;
+  return `
+    <div class="form-grid">
+      <div class="field"><label for="${idPrefix}_name">Full Name *</label>
+        <input type="text" id="${idPrefix}_name" value="${escapeHtml(g("name"))}" placeholder="e.g. John Smith" required></div>
+      <div class="field"><label for="${idPrefix}_phone">Phone *</label>
+        <input type="tel" id="${idPrefix}_phone" value="${escapeHtml(g("phone"))}" placeholder="07xxx xxxxxx" required></div>
+      <div class="field"><label for="${idPrefix}_email">Email</label>
+        <input type="email" id="${idPrefix}_email" value="${escapeHtml(g("email"))}" placeholder="name@example.com"></div>
+      <div class="field"><label for="${idPrefix}_status">Status</label>
+        <select id="${idPrefix}_status">${STATUSES.map(s => `<option value="${s}" ${g("status", "Fresh Data") === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
+
+      <div class="form-divider">Property Address</div>
+      <div class="field"><label for="${idPrefix}_doorNumber">Door Number</label>
+        <input type="text" id="${idPrefix}_doorNumber" value="${escapeHtml(g("doorNumber"))}" placeholder="e.g. 12"></div>
+      <div class="field"><label for="${idPrefix}_street">Street</label>
+        <input type="text" id="${idPrefix}_street" value="${escapeHtml(g("street"))}" placeholder="e.g. Oak Avenue"></div>
+      <div class="field"><label for="${idPrefix}_city">City</label>
+        <input type="text" id="${idPrefix}_city" value="${escapeHtml(g("city"))}" placeholder="e.g. Manchester"></div>
+      <div class="field"><label for="${idPrefix}_postcode">Postcode</label>
+        <input type="text" id="${idPrefix}_postcode" value="${escapeHtml(g("postcode"))}" placeholder="e.g. M14 5TP" style="text-transform:uppercase;"></div>
+
+      <div class="form-divider">Property Details</div>
+      <div class="field"><label for="${idPrefix}_propertyType">Property Type</label>
+        <select id="${idPrefix}_propertyType">${PROPERTY_TYPES.map(t => `<option value="${t}" ${g("propertyType") === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+      <div class="field"><label for="${idPrefix}_roomType">Room Type</label>
+        <select id="${idPrefix}_roomType">${ROOM_TYPES.map(t => `<option value="${t}" ${g("roomType") === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+      <div class="field"><label for="${idPrefix}_bedrooms">Bedrooms</label>
+        <input type="number" min="0" id="${idPrefix}_bedrooms" value="${escapeHtml(g("bedrooms"))}"></div>
+      <div class="field"><label for="${idPrefix}_currentOccupants">Current Occupants</label>
+        <input type="number" min="0" id="${idPrefix}_currentOccupants" value="${escapeHtml(g("currentOccupants"))}"></div>
+      <div class="field"><label for="${idPrefix}_bathrooms">Bathrooms</label>
+        <input type="number" min="0" id="${idPrefix}_bathrooms" value="${escapeHtml(g("bathrooms"))}"></div>
+      <div class="field"><label for="${idPrefix}_toilets">Toilets</label>
+        <input type="number" min="0" id="${idPrefix}_toilets" value="${escapeHtml(g("toilets"))}"></div>
+
+      <div class="form-divider">Finance</div>
+      <div class="field"><label for="${idPrefix}_monthlyRent">Monthly Rent (£)</label>
+        <input type="number" min="0" step="0.01" id="${idPrefix}_monthlyRent" value="${escapeHtml(g("monthlyRent"))}"></div>
+      <div class="field"><label for="${idPrefix}_deposit">Deposit (£)</label>
+        <input type="number" min="0" step="0.01" id="${idPrefix}_deposit" value="${escapeHtml(g("deposit"))}"></div>
+      <div class="field"><label for="${idPrefix}_commission">Commission (£)</label>
+        <input type="number" min="0" step="0.01" id="${idPrefix}_commission" value="${escapeHtml(g("commission"))}">
+        <span class="hint">Auto-calculated from rent at ${DB.settings.commissionRate}% — you can override it.</span></div>
+      <div class="field"><label for="${idPrefix}_availableFrom">Available From</label>
+        <input type="date" id="${idPrefix}_availableFrom" value="${escapeHtml(g("availableFrom"))}"></div>
+
+      <div class="form-divider">Features</div>
+      <div class="field span-3">
+        <div class="checks-grid">
+          ${checkRow(idPrefix, "billsIncluded", "Bills Included", g("billsIncluded"))}
+          ${checkRow(idPrefix, "privateGarden", "Private Garden", g("privateGarden"))}
+          ${checkRow(idPrefix, "freeParking", "Free Parking", g("freeParking"))}
+          ${checkRow(idPrefix, "couplesAllowed", "Couples Allowed", g("couplesAllowed"))}
+          ${checkRow(idPrefix, "universalCreditDSS", "Universal Credit / DSS Accepted", g("universalCreditDSS"))}
+        </div>
+      </div>
+      <div class="field"><label for="${idPrefix}_furnished">Furnished</label>
+        <select id="${idPrefix}_furnished">${FURNISHED_OPTIONS.map(t => `<option value="${t}" ${g("furnished") === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+      <div class="field"><label for="${idPrefix}_noOfPeople">Max No. of People</label>
+        <input type="number" min="0" id="${idPrefix}_noOfPeople" value="${escapeHtml(g("noOfPeople"))}"></div>
+
+      <div class="form-divider">Local Area</div>
+      <div class="field span-2"><label for="${idPrefix}_nearbyTransportLinks">Nearby Transport Links</label>
+        <input type="text" id="${idPrefix}_nearbyTransportLinks" value="${escapeHtml(g("nearbyTransportLinks"))}" placeholder="e.g. 5 min walk to Oxford Road station"></div>
+      <div class="field span-2"><label for="${idPrefix}_localAmenities">Local Amenities</label>
+        <input type="text" id="${idPrefix}_localAmenities" value="${escapeHtml(g("localAmenities"))}" placeholder="e.g. Tesco Express, gym, park nearby"></div>
+
+      <div class="form-divider">Notes</div>
+      <div class="field span-3"><label for="${idPrefix}_houseRules">House Rules</label>
+        <textarea id="${idPrefix}_houseRules" placeholder="e.g. No smoking indoors, no pets">${escapeHtml(g("houseRules"))}</textarea></div>
+      <div class="field span-3"><label for="${idPrefix}_notes">Internal Notes</label>
+        <textarea id="${idPrefix}_notes" placeholder="Anything else worth remembering about this landlord or property">${escapeHtml(g("notes"))}</textarea></div>
+    </div>
+  `;
+}
+
+function checkRow(idPrefix, key, label, checked) {
+  return `<div class="check-row">
+    <input type="checkbox" id="${idPrefix}_${key}" ${checked ? "checked" : ""}>
+    <label for="${idPrefix}_${key}">${label}</label>
+  </div>`;
+}
+
+function wireCommissionAutoCalc(idPrefix) {
+  const rentEl = document.getElementById(`${idPrefix}_monthlyRent`);
+  const commEl = document.getElementById(`${idPrefix}_commission`);
+  if (!rentEl || !commEl) return;
+  let commissionTouchedManually = false;
+  commEl.addEventListener("input", () => { commissionTouchedManually = true; });
+  rentEl.addEventListener("input", () => {
+    if (commissionTouchedManually) return;
+    const rent = parseFloat(rentEl.value) || 0;
+    const rate = Number(DB.settings.commissionRate) || 0;
+    commEl.value = ((rent * rate) / 100).toFixed(2);
+  });
+}
+
+function readLandlordForm(idPrefix) {
+  const v = (id) => document.getElementById(`${idPrefix}_${id}`).value;
+  const c = (id) => document.getElementById(`${idPrefix}_${id}`).checked;
+  return {
+    name: v("name").trim(),
+    phone: v("phone").trim(),
+    email: v("email").trim(),
+    status: v("status"),
+    doorNumber: v("doorNumber").trim(),
+    street: v("street").trim(),
+    city: v("city").trim(),
+    postcode: v("postcode").trim().toUpperCase(),
+    propertyType: v("propertyType"),
+    roomType: v("roomType"),
+    bedrooms: v("bedrooms"),
+    currentOccupants: v("currentOccupants"),
+    bathrooms: v("bathrooms"),
+    toilets: v("toilets"),
+    monthlyRent: v("monthlyRent"),
+    deposit: v("deposit"),
+    commission: v("commission"),
+    availableFrom: v("availableFrom"),
+    billsIncluded: c("billsIncluded"),
+    privateGarden: c("privateGarden"),
+    freeParking: c("freeParking"),
+    couplesAllowed: c("couplesAllowed"),
+    universalCreditDSS: c("universalCreditDSS"),
+    furnished: v("furnished"),
+    noOfPeople: v("noOfPeople"),
+    nearbyTransportLinks: v("nearbyTransportLinks").trim(),
+    localAmenities: v("localAmenities").trim(),
+    houseRules: v("houseRules").trim(),
+    notes: v("notes").trim()
+  };
+}
+
+function validateLandlord(data) {
+  if (!data.name) return "Please enter the landlord's name.";
+  if (!data.phone) return "Please enter a phone number.";
+  return null;
+}
+
+/* ---------------------------------------------------------------------
+   LANDLORD MODAL (Add / Edit)
+--------------------------------------------------------------------- */
+function openLandlordModal(landlordId = null) {
+  const existing = landlordId ? DB.landlords.find(l => l.id === landlordId) : null;
+  const isEdit = !!existing;
+
+  openModal(`
+    <div class="modal-head">
+      <h3>${isEdit ? "Edit Landlord" : "Add Landlord"}</h3>
+      <button class="icon-btn" id="lmClose">${ICONS.x}</button>
+    </div>
+    <div class="modal-body">
+      ${landlordFormFields(existing || {}, "lm")}
+    </div>
+    <div class="modal-foot">
+      ${isEdit ? `<div class="foot-left"><button class="btn btn-danger" id="lmDelete">${ICONS.trash}Delete</button></div>` : ""}
+      <button class="btn btn-ghost" id="lmCancel">Cancel</button>
+      <button class="btn btn-primary" id="lmSave">${isEdit ? "Save Changes" : "Save Landlord"}</button>
+    </div>
+  `);
+
+  wireCommissionAutoCalc("lm");
+  document.getElementById("lmClose").addEventListener("click", closeModal);
+  document.getElementById("lmCancel").addEventListener("click", closeModal);
+  document.getElementById("lmSave").addEventListener("click", async () => {
+    const data = readLandlordForm("lm");
+    const err = validateLandlord(data);
+    if (err) { toast(err, "error"); return; }
+
+    if (isEdit) {
+      Object.assign(existing, data, { updatedAt: new Date().toISOString() });
+    } else {
+      DB.landlords.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    }
+    const ok = await saveCollection("landlords");
+    if (ok) {
+      toast(isEdit ? "Landlord updated" : "Landlord saved");
+      closeModal();
+      renderNav();
+      renderCurrentView();
+    }
+  });
+
+  if (isEdit) {
+    document.getElementById("lmDelete").addEventListener("click", () => {
+      confirmDialog({
+        title: "Delete this landlord?",
+        message: `This will permanently remove <strong>${escapeHtml(existing.name || "this record")}</strong> and all associated property data. This cannot be undone.`,
+        confirmLabel: "Delete",
+        onConfirm: async () => {
+          DB.landlords = DB.landlords.filter(l => l.id !== existing.id);
+          const ok = await saveCollection("landlords");
+          if (ok) { toast("Landlord deleted"); renderNav(); renderCurrentView(); }
+        }
+      });
+    });
+  }
+}
+
+/* ---------------------------------------------------------------------
+   LANDLORDS VIEW (master database — all statuses)
+--------------------------------------------------------------------- */
+function getFilteredSortedLandlords() {
+  const { search, status, sortBy, sortDir } = uiState.landlords;
+  let rows = [...DB.landlords];
+
+  if (status !== "ALL") rows = rows.filter(l => l.status === status);
+
+  if (search.trim()) {
+    const q = search.trim().toLowerCase();
+    rows = rows.filter(l =>
+      (l.name || "").toLowerCase().includes(q) ||
+      (l.phone || "").toLowerCase().includes(q) ||
+      (l.email || "").toLowerCase().includes(q) ||
+      (l.postcode || "").toLowerCase().includes(q) ||
+      (l.city || "").toLowerCase().includes(q) ||
+      (l.street || "").toLowerCase().includes(q)
+    );
+  }
+
+  rows.sort((a, b) => {
+    let av = a[sortBy], bv = b[sortBy];
+    if (sortBy === "monthlyRent" || sortBy === "commission") { av = Number(av) || 0; bv = Number(bv) || 0; }
+    else if (sortBy === "createdAt") { av = new Date(av || 0).getTime(); bv = new Date(bv || 0).getTime(); }
+    else { av = (av || "").toString().toLowerCase(); bv = (bv || "").toString().toLowerCase(); }
+    if (av < bv) return sortDir === "asc" ? -1 : 1;
+    if (av > bv) return sortDir === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  return rows;
+}
+
+function renderLandlords() {
+  const el = document.getElementById("view-landlords");
+  const rows = getFilteredSortedLandlords();
+
+  el.innerHTML = `
+    <div class="toolbar">
+      <div class="search-box">
+        ${ICONS.search}
+        <input type="text" id="landlordSearch" placeholder="Search by name, phone, email, postcode…" value="${escapeHtml(uiState.landlords.search)}">
+      </div>
+      <select id="landlordStatusFilter">
+        <option value="ALL" ${uiState.landlords.status === "ALL" ? "selected" : ""}>All Statuses</option>
+        ${STATUSES.map(s => `<option value="${s}" ${uiState.landlords.status === s ? "selected" : ""}>${s}</option>`).join("")}
+      </select>
+      <div class="toolbar-spacer"></div>
+      <span class="shared-note">${rows.length} of ${DB.landlords.length} record${DB.landlords.length === 1 ? "" : "s"}</span>
+    </div>
+
+    ${rows.length === 0 ? emptyState("building", DB.landlords.length === 0 ? "No landlords yet" : "No matches found",
+        DB.landlords.length === 0 ? "Add your first landlord, or enter one via Fresh Data during a call." : "Try a different search or filter.") :
+    `<div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            ${sortHeader("Name", "name")}
+            <th>Contact</th>
+            <th>Address</th>
+            ${sortHeader("Type", "propertyType")}
+            ${sortHeader("Rent", "monthlyRent")}
+            ${sortHeader("Commission", "commission")}
+            ${sortHeader("Status", "status")}
+            ${sortHeader("Added", "createdAt")}
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(l => `
+            <tr>
+              <td style="font-weight:600; cursor:pointer;" data-open="${l.id}">${escapeHtml(l.name || "—")}</td>
+              <td class="cell-dim">${escapeHtml(l.phone || "—")}</td>
+              <td class="cell-dim">${escapeHtml(fullAddress(l)) || "—"}</td>
+              <td class="cell-dim">${escapeHtml(l.propertyType || "—")}</td>
+              <td class="money">${l.monthlyRent ? fmtMoney(l.monthlyRent) : "—"}</td>
+              <td class="money">${l.commission ? fmtMoney(l.commission) : "—"}</td>
+              <td>${statusBadge(l.status)}</td>
+              <td class="cell-dim">${fmtDate(l.createdAt)}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="icon-btn" title="WhatsApp" data-wa="${l.id}">${ICONS.whatsapp}</button>
+                  <button class="icon-btn" title="Consent Email" data-mail="${l.id}">${ICONS.mail}</button>
+                  <button class="icon-btn" title="Copy Phone Number" data-copyphone="${l.id}">${ICONS.phone}</button>
+                  <button class="icon-btn" title="Edit" data-open="${l.id}">${ICONS.edit}</button>
+                  <button class="icon-btn" title="Delete" data-del="${l.id}">${ICONS.trash}</button>
+                </div>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>`}
+  `;
+
+  document.getElementById("landlordSearch").addEventListener("input", debounce((e) => {
+    uiState.landlords.search = e.target.value;
+    renderLandlords();
+  }, 200));
+  document.getElementById("landlordSearch").focus();
+  // restore cursor position after re-render
+  const searchInput = document.getElementById("landlordSearch");
+  searchInput.selectionStart = searchInput.selectionEnd = searchInput.value.length;
+
+  document.getElementById("landlordStatusFilter").addEventListener("change", (e) => {
+    uiState.landlords.status = e.target.value;
+    renderLandlords();
+  });
+
+  el.querySelectorAll("[data-sort]").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.sort;
+      if (uiState.landlords.sortBy === key) {
+        uiState.landlords.sortDir = uiState.landlords.sortDir === "asc" ? "desc" : "asc";
+      } else {
+        uiState.landlords.sortBy = key;
+        uiState.landlords.sortDir = "asc";
+      }
+      renderLandlords();
+    });
+  });
+
+  el.querySelectorAll("[data-open]").forEach(x => x.addEventListener("click", () => openLandlordModal(x.dataset.open)));
+  el.querySelectorAll("[data-wa]").forEach(x => x.addEventListener("click", (e) => { e.stopPropagation(); openWhatsAppModal(x.dataset.wa); }));
+  el.querySelectorAll("[data-mail]").forEach(x => x.addEventListener("click", (e) => { e.stopPropagation(); openConsentEmailModal(x.dataset.mail); }));
+  el.querySelectorAll("[data-copyphone]").forEach(x => x.addEventListener("click", (e) => { e.stopPropagation(); copyPhoneNumber(x.dataset.copyphone, "landlord"); }));
+  el.querySelectorAll("[data-del]").forEach(x => x.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const landlord = DB.landlords.find(l => l.id === x.dataset.del);
+    confirmDialog({
+      title: "Delete this landlord?",
+      message: `This will permanently remove <strong>${escapeHtml(landlord.name || "this record")}</strong>. This cannot be undone.`,
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        DB.landlords = DB.landlords.filter(l => l.id !== landlord.id);
+        const ok = await saveCollection("landlords");
+        if (ok) { toast("Landlord deleted"); renderNav(); renderCurrentView(); }
+      }
+    });
+  }));
+}
+
+function sortHeader(label, key) {
+  const active = uiState.landlords.sortBy === key;
+  const arrow = active ? (uiState.landlords.sortDir === "asc" ? "▲" : "▼") : "";
+  return `<th data-sort="${key}">${label}${active ? `<span class="sort-arrow">${arrow}</span>` : ""}</th>`;
+}
+
+function statusBadge(status) {
+  const cls = STATUS_CLASS[status] || "badge-freshdata";
+  return `<span class="badge ${cls}"><span class="dot" style="background:currentColor;"></span>${escapeHtml(status || "—")}</span>`;
+}
+
+/* ---------------------------------------------------------------------
+   FRESH DATA VIEW (fast entry during live calls + call queue)
+--------------------------------------------------------------------- */
+function renderFreshData() {
+  const el = document.getElementById("view-freshdata");
+  const queue = DB.landlords
+    .filter(l => l.status === "Fresh Data")
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:20px;">
+      <div class="quick-entry-toggle" id="qeToggle">
+        <div>
+          <h2 style="margin:0; font-size:14.5px; font-weight:700;">Quick Entry</h2>
+          <div class="sub" style="font-size:12px; color:var(--text-faint); margin-top:2px;">Enter details while you're on the call — press "Save &amp; New" to move straight to the next lead.</div>
+        </div>
+        <span class="icon-btn" style="transform:${uiState.freshDataFormOpen ? "rotate(180deg)" : "rotate(0deg)"}; transition:transform .15s ease;">${ICONS.chevronDown}</span>
+      </div>
+      <div id="qeFormWrap" style="display:${uiState.freshDataFormOpen ? "block" : "none"}; margin-top:18px;">
+        <form id="qeForm">
+          ${landlordFormFields({ status: "Fresh Data" }, "qe")}
+        </form>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">
+          <button class="btn btn-ghost" id="qeClear">Clear Form</button>
+          <button class="btn btn-primary" id="qeSaveNew">${ICONS.plus}Save &amp; New</button>
+          <button class="btn btn-primary" id="qeSaveClose">Save &amp; Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div>
+        <h2>Call Queue — Fresh Data</h2>
+        <div class="sub">${queue.length} lead${queue.length === 1 ? "" : "s"} awaiting first contact</div>
+      </div>
+    </div>
+
+    ${queue.length === 0 ? emptyState("bolt", "Queue is clear", "Every lead has been actioned. New entries you save above will appear here.") :
+    `<div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Contact</th><th>Address</th><th>Rent</th><th>Added</th><th>Update Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          ${queue.map(l => `
+            <tr>
+              <td style="font-weight:600; cursor:pointer;" data-open="${l.id}">${escapeHtml(l.name || "—")}</td>
+              <td class="cell-dim">${escapeHtml(l.phone || "—")}</td>
+              <td class="cell-dim">${escapeHtml(fullAddress(l)) || "—"}</td>
+              <td class="money">${l.monthlyRent ? fmtMoney(l.monthlyRent) : "—"}</td>
+              <td class="cell-dim">${fmtDateTime(l.createdAt)}</td>
+              <td>
+                <select class="status-select-inline" data-status-change="${l.id}">
+                  ${STATUSES.map(s => `<option value="${s}" ${l.status === s ? "selected" : ""}>${s}</option>`).join("")}
+                </select>
+              </td>
+              <td>
+                <div class="row-actions">
+                  <button class="icon-btn" title="WhatsApp" data-wa="${l.id}">${ICONS.whatsapp}</button>
+                  <button class="icon-btn" title="Consent Email" data-mail="${l.id}">${ICONS.mail}</button>
+                  <button class="icon-btn" title="Copy Phone Number" data-copyphone="${l.id}">${ICONS.phone}</button>
+                  <button class="icon-btn" title="Edit" data-open="${l.id}">${ICONS.edit}</button>
+                  <button class="icon-btn" title="Delete" data-del="${l.id}">${ICONS.trash}</button>
+                </div>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>`}
+  `;
+
+  document.getElementById("qeToggle").addEventListener("click", () => {
+    uiState.freshDataFormOpen = !uiState.freshDataFormOpen;
+    renderFreshData();
+  });
+
+  if (uiState.freshDataFormOpen) {
+    wireCommissionAutoCalc("qe");
+
+    document.getElementById("qeClear").addEventListener("click", () => renderFreshData());
+
+    document.getElementById("qeSaveNew").addEventListener("click", async () => {
+      const data = readLandlordForm("qe");
+      const err = validateLandlord(data);
+      if (err) { toast(err, "error"); return; }
+      DB.landlords.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      const ok = await saveCollection("landlords");
+      if (ok) {
+        toast(`Saved ${data.name} — ready for next entry`);
+        renderNav();
+        renderFreshData();
+        const nameField = document.getElementById("qe_name");
+        if (nameField) nameField.focus();
+      }
+    });
+
+    document.getElementById("qeSaveClose").addEventListener("click", async () => {
+      const data = readLandlordForm("qe");
+      const err = validateLandlord(data);
+      if (err) { toast(err, "error"); return; }
+      DB.landlords.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      const ok = await saveCollection("landlords");
+      if (ok) {
+        toast(`Saved ${data.name}`);
+        uiState.freshDataFormOpen = false;
+        renderNav();
+        renderFreshData();
+      }
+    });
+  }
+
+  el.querySelectorAll("[data-open]").forEach(x => x.addEventListener("click", () => openLandlordModal(x.dataset.open)));
+  el.querySelectorAll("[data-wa]").forEach(x => x.addEventListener("click", () => openWhatsAppModal(x.dataset.wa)));
+  el.querySelectorAll("[data-mail]").forEach(x => x.addEventListener("click", () => openConsentEmailModal(x.dataset.mail)));
+  el.querySelectorAll("[data-copyphone]").forEach(x => x.addEventListener("click", () => copyPhoneNumber(x.dataset.copyphone, "landlord")));
+  el.querySelectorAll("[data-status-change]").forEach(x => x.addEventListener("change", async () => {
+    const landlord = DB.landlords.find(l => l.id === x.dataset.statusChange);
+    landlord.status = x.value;
+    landlord.updatedAt = new Date().toISOString();
+    const ok = await saveCollection("landlords");
+    if (ok) { toast(`Status updated to "${x.value}"`); renderNav(); renderFreshData(); }
+  }));
+  el.querySelectorAll("[data-del]").forEach(x => x.addEventListener("click", () => {
+    const landlord = DB.landlords.find(l => l.id === x.dataset.del);
+    confirmDialog({
+      title: "Delete this lead?",
+      message: `This will permanently remove <strong>${escapeHtml(landlord.name || "this record")}</strong>. This cannot be undone.`,
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        DB.landlords = DB.landlords.filter(l => l.id !== landlord.id);
+        const ok = await saveCollection("landlords");
+        if (ok) { toast("Lead deleted"); renderNav(); renderFreshData(); }
+      }
+    });
+  }));
+}
+
+/* ---------------------------------------------------------------------
+   TENANTS MODULE
+--------------------------------------------------------------------- */
+function tenantFormFields(t = {}, idPrefix = "tf") {
+  const g = (key, fallback = "") => (t[key] !== undefined && t[key] !== null) ? t[key] : fallback;
+  return `
+    <div class="form-grid">
+      <div class="field"><label for="${idPrefix}_name">Full Name *</label>
+        <input type="text" id="${idPrefix}_name" value="${escapeHtml(g("name"))}" placeholder="e.g. Sarah Johnson" required></div>
+      <div class="field"><label for="${idPrefix}_phone">Phone *</label>
+        <input type="tel" id="${idPrefix}_phone" value="${escapeHtml(g("phone"))}" placeholder="07xxx xxxxxx" required></div>
+      <div class="field"><label for="${idPrefix}_email">Email</label>
+        <input type="email" id="${idPrefix}_email" value="${escapeHtml(g("email"))}" placeholder="name@example.com"></div>
+      <div class="field"><label for="${idPrefix}_status">Status</label>
+        <select id="${idPrefix}_status">${STATUSES.map(s => `<option value="${s}" ${g("status", "Fresh Data") === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
+      <div class="field"><label for="${idPrefix}_moveInDate">Move-in Date</label>
+        <input type="date" id="${idPrefix}_moveInDate" value="${escapeHtml(g("moveInDate"))}"></div>
+      <div class="field"><label for="${idPrefix}_numberOfPersons">Number of Persons</label>
+        <input type="number" min="1" id="${idPrefix}_numberOfPersons" value="${escapeHtml(g("numberOfPersons"))}"></div>
+      <div class="field"><label for="${idPrefix}_countryOfOrigin">Country of Origin</label>
+        <input type="text" id="${idPrefix}_countryOfOrigin" value="${escapeHtml(g("countryOfOrigin"))}" placeholder="e.g. Poland"></div>
+      <div class="field"><label for="${idPrefix}_annualIncome">Annual Income (£)</label>
+        <input type="number" min="0" step="0.01" id="${idPrefix}_annualIncome" value="${escapeHtml(g("annualIncome"))}"></div>
+      <div class="field"><label for="${idPrefix}_profession">Profession</label>
+        <input type="text" id="${idPrefix}_profession" value="${escapeHtml(g("profession"))}" placeholder="e.g. Nurse"></div>
+      <div class="field span-2"><label for="${idPrefix}_notes">Notes</label>
+        <textarea id="${idPrefix}_notes" placeholder="Anything worth remembering about this tenant">${escapeHtml(g("notes"))}</textarea></div>
+    </div>
+  `;
+}
+
+function readTenantForm(idPrefix) {
+  const v = (id) => document.getElementById(`${idPrefix}_${id}`).value;
+  return {
+    name: v("name").trim(),
+    phone: v("phone").trim(),
+    email: v("email").trim(),
+    status: v("status"),
+    moveInDate: v("moveInDate"),
+    numberOfPersons: v("numberOfPersons"),
+    countryOfOrigin: v("countryOfOrigin").trim(),
+    annualIncome: v("annualIncome"),
+    profession: v("profession").trim(),
+    notes: v("notes").trim()
+  };
+}
+
+function validateTenant(data) {
+  if (!data.name) return "Please enter the tenant's name.";
+  if (!data.phone) return "Please enter a phone number.";
+  return null;
+}
+
+function openTenantModal(tenantId = null) {
+  const existing = tenantId ? DB.tenants.find(t => t.id === tenantId) : null;
+  const isEdit = !!existing;
+
+  openModal(`
+    <div class="modal-head">
+      <h3>${isEdit ? "Edit Tenant" : "Add Tenant"}</h3>
+      <button class="icon-btn" id="tmClose">${ICONS.x}</button>
+    </div>
+    <div class="modal-body">${tenantFormFields(existing || {}, "tm")}</div>
+    <div class="modal-foot">
+      ${isEdit ? `<div class="foot-left"><button class="btn btn-danger" id="tmDelete">${ICONS.trash}Delete</button></div>` : ""}
+      <button class="btn btn-ghost" id="tmCancel">Cancel</button>
+      <button class="btn btn-primary" id="tmSave">${isEdit ? "Save Changes" : "Save Tenant"}</button>
+    </div>
+  `);
+
+  document.getElementById("tmClose").addEventListener("click", closeModal);
+  document.getElementById("tmCancel").addEventListener("click", closeModal);
+  document.getElementById("tmSave").addEventListener("click", async () => {
+    const data = readTenantForm("tm");
+    const err = validateTenant(data);
+    if (err) { toast(err, "error"); return; }
+
+    if (isEdit) {
+      Object.assign(existing, data, { updatedAt: new Date().toISOString() });
+    } else {
+      DB.tenants.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    }
+    const ok = await saveCollection("tenants");
+    if (ok) {
+      toast(isEdit ? "Tenant updated" : "Tenant saved");
+      closeModal();
+      renderNav();
+      renderCurrentView();
+    }
+  });
+
+  if (isEdit) {
+    document.getElementById("tmDelete").addEventListener("click", () => {
+      confirmDialog({
+        title: "Delete this tenant?",
+        message: `This will permanently remove <strong>${escapeHtml(existing.name || "this record")}</strong>. This cannot be undone.`,
+        confirmLabel: "Delete",
+        onConfirm: async () => {
+          DB.tenants = DB.tenants.filter(t => t.id !== existing.id);
+          const ok = await saveCollection("tenants");
+          if (ok) { toast("Tenant deleted"); renderNav(); renderCurrentView(); }
+        }
+      });
+    });
+  }
+}
+
+function getFilteredSortedTenants() {
+  const { search, status, sortBy, sortDir } = uiState.tenants;
+  let rows = [...DB.tenants];
+
+  if (status !== "ALL") rows = rows.filter(t => t.status === status);
+
+  if (search.trim()) {
+    const q = search.trim().toLowerCase();
+    rows = rows.filter(t =>
+      (t.name || "").toLowerCase().includes(q) ||
+      (t.phone || "").toLowerCase().includes(q) ||
+      (t.email || "").toLowerCase().includes(q) ||
+      (t.profession || "").toLowerCase().includes(q) ||
+      (t.countryOfOrigin || "").toLowerCase().includes(q)
+    );
+  }
+
+  rows.sort((a, b) => {
+    let av = a[sortBy], bv = b[sortBy];
+    if (sortBy === "annualIncome" || sortBy === "numberOfPersons") { av = Number(av) || 0; bv = Number(bv) || 0; }
+    else if (sortBy === "createdAt" || sortBy === "moveInDate") { av = new Date(av || 0).getTime(); bv = new Date(bv || 0).getTime(); }
+    else { av = (av || "").toString().toLowerCase(); bv = (bv || "").toString().toLowerCase(); }
+    if (av < bv) return sortDir === "asc" ? -1 : 1;
+    if (av > bv) return sortDir === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  return rows;
+}
+
+function renderTenants() {
+  const el = document.getElementById("view-tenants");
+  const rows = getFilteredSortedTenants();
+
+  const sh = (label, key) => {
+    const active = uiState.tenants.sortBy === key;
+    const arrow = active ? (uiState.tenants.sortDir === "asc" ? "▲" : "▼") : "";
+    return `<th data-tsort="${key}">${label}${active ? `<span class="sort-arrow">${arrow}</span>` : ""}</th>`;
+  };
+
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:20px;">
+      <div class="quick-entry-toggle" id="tqeToggle">
+        <div>
+          <h2 style="margin:0; font-size:14.5px; font-weight:700;">Quick Entry</h2>
+          <div class="sub" style="font-size:12px; color:var(--text-faint); margin-top:2px;">Enter tenant details while you're on the call — press "Save &amp; New" to move straight to the next lead.</div>
+        </div>
+        <span class="icon-btn" style="transform:${uiState.tenantFormOpen ? "rotate(180deg)" : "rotate(0deg)"}; transition:transform .15s ease;">${ICONS.chevronDown}</span>
+      </div>
+      <div id="tqeFormWrap" style="display:${uiState.tenantFormOpen ? "block" : "none"}; margin-top:18px;">
+        <form id="tqeForm">
+          ${tenantFormFields({ status: "Fresh Data" }, "tqe")}
+        </form>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">
+          <button class="btn btn-ghost" id="tqeClear">Clear Form</button>
+          <button class="btn btn-primary" id="tqeSaveNew">${ICONS.plus}Save &amp; New</button>
+          <button class="btn btn-primary" id="tqeSaveClose">Save &amp; Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-box">
+        ${ICONS.search}
+        <input type="text" id="tenantSearch" placeholder="Search by name, phone, profession…" value="${escapeHtml(uiState.tenants.search)}">
+      </div>
+      <select id="tenantStatusFilter">
+        <option value="ALL" ${uiState.tenants.status === "ALL" ? "selected" : ""}>All Statuses</option>
+        ${STATUSES.map(s => `<option value="${s}" ${uiState.tenants.status === s ? "selected" : ""}>${s}</option>`).join("")}
+      </select>
+      <div class="toolbar-spacer"></div>
+      <span class="shared-note">${rows.length} of ${DB.tenants.length} record${DB.tenants.length === 1 ? "" : "s"}</span>
+    </div>
+
+    ${rows.length === 0 ? emptyState("users", DB.tenants.length === 0 ? "No tenants yet" : "No matches found",
+        DB.tenants.length === 0 ? "Add your first tenant above, or via the Add Tenant button." : "Try a different search or filter.") :
+    `<div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            ${sh("Name", "name")}
+            <th>Contact</th>
+            ${sh("Move-in", "moveInDate")}
+            ${sh("Persons", "numberOfPersons")}
+            <th>Country of Origin</th>
+            ${sh("Annual Income", "annualIncome")}
+            <th>Profession</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(t => `
+            <tr>
+              <td style="font-weight:600; cursor:pointer;" data-topen="${t.id}">${escapeHtml(t.name || "—")}</td>
+              <td class="cell-dim">${escapeHtml(t.phone || "—")}</td>
+              <td class="cell-dim">${fmtDate(t.moveInDate)}</td>
+              <td class="cell-dim">${escapeHtml(t.numberOfPersons || "—")}</td>
+              <td class="cell-dim">${escapeHtml(t.countryOfOrigin || "—")}</td>
+              <td class="money">${t.annualIncome ? fmtMoney(t.annualIncome) : "—"}</td>
+              <td class="cell-dim">${escapeHtml(t.profession || "—")}</td>
+              <td>
+                <select class="status-select-inline" data-tstatus-change="${t.id}">
+                  ${STATUSES.map(s => `<option value="${s}" ${(t.status || "Fresh Data") === s ? "selected" : ""}>${s}</option>`).join("")}
+                </select>
+              </td>
+              <td>
+                <div class="row-actions">
+                  <button class="icon-btn" title="WhatsApp" data-twa="${t.id}">${ICONS.whatsapp}</button>
+                  <button class="icon-btn" title="Send Email" data-temail="${t.id}">${ICONS.mail}</button>
+                  <button class="icon-btn" title="Copy Phone Number" data-tcopyphone="${t.id}">${ICONS.phone}</button>
+                  <button class="icon-btn" title="Edit" data-topen="${t.id}">${ICONS.edit}</button>
+                  <button class="icon-btn" title="Delete" data-tdel="${t.id}">${ICONS.trash}</button>
+                </div>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>`}
+  `;
+
+  document.getElementById("tqeToggle").addEventListener("click", () => {
+    uiState.tenantFormOpen = !uiState.tenantFormOpen;
+    renderTenants();
+  });
+
+  if (uiState.tenantFormOpen) {
+    document.getElementById("tqeClear").addEventListener("click", () => renderTenants());
+
+    document.getElementById("tqeSaveNew").addEventListener("click", async () => {
+      const data = readTenantForm("tqe");
+      const err = validateTenant(data);
+      if (err) { toast(err, "error"); return; }
+      DB.tenants.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      const ok = await saveCollection("tenants");
+      if (ok) {
+        toast(`Saved ${data.name} — ready for next entry`);
+        renderNav();
+        renderTenants();
+        const nameField = document.getElementById("tqe_name");
+        if (nameField) nameField.focus();
+      }
+    });
+
+    document.getElementById("tqeSaveClose").addEventListener("click", async () => {
+      const data = readTenantForm("tqe");
+      const err = validateTenant(data);
+      if (err) { toast(err, "error"); return; }
+      DB.tenants.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      const ok = await saveCollection("tenants");
+      if (ok) {
+        toast(`Saved ${data.name}`);
+        uiState.tenantFormOpen = false;
+        renderNav();
+        renderTenants();
+      }
+    });
+  }
+
+  document.getElementById("tenantSearch").addEventListener("input", debounce((e) => {
+    uiState.tenants.search = e.target.value;
+    renderTenants();
+  }, 200));
+  const si = document.getElementById("tenantSearch");
+  si.focus(); si.selectionStart = si.selectionEnd = si.value.length;
+
+  document.getElementById("tenantStatusFilter").addEventListener("change", (e) => {
+    uiState.tenants.status = e.target.value;
+    renderTenants();
+  });
+
+  el.querySelectorAll("[data-tsort]").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.tsort;
+      if (uiState.tenants.sortBy === key) uiState.tenants.sortDir = uiState.tenants.sortDir === "asc" ? "desc" : "asc";
+      else { uiState.tenants.sortBy = key; uiState.tenants.sortDir = "asc"; }
+      renderTenants();
+    });
+  });
+
+  el.querySelectorAll("[data-topen]").forEach(x => x.addEventListener("click", () => openTenantModal(x.dataset.topen)));
+  el.querySelectorAll("[data-twa]").forEach(x => x.addEventListener("click", (e) => { e.stopPropagation(); openWhatsAppModal(x.dataset.twa, "tenant"); }));
+  el.querySelectorAll("[data-temail]").forEach(x => x.addEventListener("click", (e) => { e.stopPropagation(); openTenantEmailModal(x.dataset.temail); }));
+  el.querySelectorAll("[data-tcopyphone]").forEach(x => x.addEventListener("click", (e) => { e.stopPropagation(); copyPhoneNumber(x.dataset.tcopyphone, "tenant"); }));
+  el.querySelectorAll("[data-tstatus-change]").forEach(x => x.addEventListener("change", async () => {
+    const tenant = DB.tenants.find(t => t.id === x.dataset.tstatusChange);
+    tenant.status = x.value;
+    tenant.updatedAt = new Date().toISOString();
+    const ok = await saveCollection("tenants");
+    if (ok) { toast(`Status updated to "${x.value}"`); renderTenants(); }
+  }));
+  el.querySelectorAll("[data-tdel]").forEach(x => x.addEventListener("click", () => {
+    const tenant = DB.tenants.find(t => t.id === x.dataset.tdel);
+    confirmDialog({
+      title: "Delete this tenant?",
+      message: `This will permanently remove <strong>${escapeHtml(tenant.name || "this record")}</strong>. This cannot be undone.`,
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        DB.tenants = DB.tenants.filter(t => t.id !== tenant.id);
+        const ok = await saveCollection("tenants");
+        if (ok) { toast("Tenant deleted"); renderNav(); renderCurrentView(); }
+      }
+    });
+  }));
+}
+
+/* ---------------------------------------------------------------------
+   TEMPLATE MERGING
+--------------------------------------------------------------------- */
+function mergeTemplate(text, landlord) {
+  if (!text) return "";
+  const map = {
+    "{{name}}": landlord.name || "",
+    "{{door_number}}": landlord.doorNumber || "",
+    "{{street}}": landlord.street || "",
+    "{{city}}": landlord.city || "",
+    "{{postcode}}": landlord.postcode || "",
+    "{{property_type}}": landlord.propertyType || "",
+    "{{monthly_rent}}": landlord.monthlyRent ? fmtMoney(landlord.monthlyRent) : "",
+    "{{bedrooms}}": landlord.bedrooms || ""
+  };
+  let out = text;
+  Object.keys(map).forEach(key => { out = out.split(key).join(map[key]); });
+  // Collapse any accidental double spaces left by empty placeholders
+  return out.replace(/[ \t]{2,}/g, " ").replace(/ ,/g, ",");
+}
+
+/* ---------------------------------------------------------------------
+   TEMPLATES VIEW
+--------------------------------------------------------------------- */
+function renderTemplates() {
+  const el = document.getElementById("view-templates");
+  const sig = DB.settings.signature || DEFAULT_SIGNATURE;
+
+  el.innerHTML = `
+    <div class="section-head">
+      <div>
+        <h2>WhatsApp Templates</h2>
+        <div class="sub">One editable message per status, shared by both Landlords and Tenants. The recipient's name is filled in automatically when sending.</div>
+      </div>
+    </div>
+    <div id="waTemplatesList"></div>
+
+    <div class="section-head" style="margin-top:10px;">
+      <div>
+        <h2>Consent Email</h2>
+        <div class="sub">Landlord-only — sent to confirm consent to market their property.</div>
+      </div>
+    </div>
+    <div id="consentTemplateWrap"></div>
+  `;
+
+  const waWrap = document.getElementById("waTemplatesList");
+  waWrap.innerHTML = STATUSES.map(status => `
+    <div class="tpl-card">
+      <div class="tpl-head">
+        <div class="tpl-title">${statusBadge(status)}<h4>${status} Message</h4></div>
+        <button class="btn btn-sm btn-primary" data-savetpl="${status}">Save</button>
+      </div>
+      <textarea id="tpl_${cssSafe(status)}" rows="3">${escapeHtml(DB.templates.statuses[status] || "")}</textarea>
+      <div class="tpl-placeholders">${STATUS_PLACEHOLDERS.map(p => `<span class="chip">${p}</span>`).join("")}</div>
+      <div class="signature-preview">${escapeHtml(sig)}</div>
+    </div>
+  `).join("");
+
+  waWrap.querySelectorAll("[data-savetpl]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const status = btn.dataset.savetpl;
+      const val = document.getElementById(`tpl_${cssSafe(status)}`).value;
+      DB.templates.statuses[status] = val;
+      const ok = await saveCollection("templates");
+      if (ok) toast(`"${status}" template saved`);
+    });
+  });
+
+  const consentWrap = document.getElementById("consentTemplateWrap");
+  consentWrap.innerHTML = `
+    <div class="tpl-card">
+      <div class="tpl-head">
+        <div class="tpl-title"><span class="badge badge-freshdata">${ICONS.mail}</span><h4>Consent Email</h4></div>
+        <button class="btn btn-sm btn-primary" id="saveConsentTpl">Save</button>
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label>Subject Line</label>
+        <input type="text" id="consentSubject" value="${escapeHtml(DB.templates.consentEmail.subject || "")}">
+      </div>
+      <div class="field">
+        <label>Body</label>
+        <textarea id="consentBody" rows="7">${escapeHtml(DB.templates.consentEmail.body || "")}</textarea>
+      </div>
+      <div class="tpl-placeholders">${CONSENT_PLACEHOLDERS.map(p => `<span class="chip">${p}</span>`).join("")}</div>
+      <div class="signature-preview">${escapeHtml(sig)}</div>
+    </div>
+  `;
+  document.getElementById("saveConsentTpl").addEventListener("click", async () => {
+    DB.templates.consentEmail.subject = document.getElementById("consentSubject").value;
+    DB.templates.consentEmail.body = document.getElementById("consentBody").value;
+    const ok = await saveCollection("templates");
+    if (ok) toast("Consent email template saved");
+  });
+}
+
+function cssSafe(str) { return str.replace(/[^a-zA-Z0-9]/g, "_"); }
+
+/* ---------------------------------------------------------------------
+   WHATSAPP SEND MODAL (works for both a landlord row and a tenant row —
+   status-aware, real data merged in)
+--------------------------------------------------------------------- */
+function openWhatsAppModal(entityId, kind = "landlord") {
+  const collection = kind === "tenant" ? DB.tenants : DB.landlords;
+  const entity = collection.find(x => x.id === entityId);
+  if (!entity) return;
+
+  const templateText = DB.templates.statuses[entity.status] || DB.templates.statuses["Fresh Data"] || "";
+  const sig = DB.settings.signature || DEFAULT_SIGNATURE;
+  const merged = mergeTemplate(templateText, entity) + "\n\n" + sig;
+  const label = kind === "tenant" ? "tenant" : "landlord";
+
+  openModal(`
+    <div class="modal-head">
+      <h3>Send WhatsApp — ${escapeHtml(entity.name || "")}</h3>
+      <button class="icon-btn" id="waClose">${ICONS.x}</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Message (using the "${escapeHtml(entity.status || "Fresh Data")}" template — edit freely before sending)</label>
+        <textarea id="waMessageText" rows="9">${escapeHtml(merged)}</textarea>
+      </div>
+      ${!entity.phone ? `<p class="hint" style="color:var(--amber); margin-top:8px;">This ${label} has no phone number saved — you can still copy the message.</p>` : ""}
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="waCopy">${ICONS.copy}Copy Message</button>
+      <button class="btn btn-primary" id="waOpen" ${!entity.phone ? "disabled" : ""}>${ICONS.whatsapp}Open in WhatsApp</button>
+    </div>
+  `);
+
+  document.getElementById("waClose").addEventListener("click", closeModal);
+  document.getElementById("waCopy").addEventListener("click", async () => {
+    const text = document.getElementById("waMessageText").value;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast("Message copied to clipboard");
+    } catch (e) {
+      toast("Could not copy — please select and copy manually", "error");
+    }
+  });
+  document.getElementById("waOpen").addEventListener("click", () => {
+    const text = document.getElementById("waMessageText").value;
+    const digits = (entity.phone || "").replace(/[^\d+]/g, "").replace(/^0/, "44");
+    const url = `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank");
+  });
+}
+
+/* ---------------------------------------------------------------------
+   COPY PHONE NUMBER (shared by Landlord and Tenant rows)
+--------------------------------------------------------------------- */
+async function copyPhoneNumber(entityId, kind = "landlord") {
+  const collection = kind === "tenant" ? DB.tenants : DB.landlords;
+  const entity = collection.find(x => x.id === entityId);
+  if (!entity) return;
+  if (!entity.phone) { toast("No phone number saved for this record", "error"); return; }
+  try {
+    await navigator.clipboard.writeText(entity.phone);
+    toast("Phone number copied to clipboard");
+  } catch (e) {
+    toast("Could not copy — please copy manually", "error");
+  }
+}
+
+/* ---------------------------------------------------------------------
+   CONSENT EMAIL MODAL (landlord-only — consent is never required from tenants)
+--------------------------------------------------------------------- */
+function openConsentEmailModal(landlordId) {
+  const landlord = DB.landlords.find(l => l.id === landlordId);
+  if (!landlord) return;
+
+  const sig = DB.settings.signature || DEFAULT_SIGNATURE;
+  const subject = mergeTemplate(DB.templates.consentEmail.subject || "", landlord);
+  const body = mergeTemplate(DB.templates.consentEmail.body || "", landlord) + "\n\n" + sig;
+
+  openModal(`
+    <div class="modal-head">
+      <h3>Consent Email — ${escapeHtml(landlord.name || "")}</h3>
+      <button class="icon-btn" id="ceClose">${ICONS.x}</button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:12px;">
+        <label>Subject</label>
+        <input type="text" id="ceSubject" value="${escapeHtml(subject)}">
+      </div>
+      <div class="field">
+        <label>Body</label>
+        <textarea id="ceBody" rows="10">${escapeHtml(body)}</textarea>
+      </div>
+      ${!landlord.email ? `<p class="hint" style="color:var(--amber); margin-top:8px;">This landlord has no email saved — you can still copy the message.</p>` : ""}
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="ceCopy">${ICONS.copy}Copy Message</button>
+      <button class="btn btn-primary" id="ceOpen" ${!landlord.email ? "disabled" : ""}>${ICONS.mail}Open in Email</button>
+    </div>
+  `);
+
+  document.getElementById("ceClose").addEventListener("click", closeModal);
+  document.getElementById("ceCopy").addEventListener("click", async () => {
+    const text = "Subject: " + document.getElementById("ceSubject").value + "\n\n" + document.getElementById("ceBody").value;
+    try { await navigator.clipboard.writeText(text); toast("Email copied to clipboard"); }
+    catch (e) { toast("Could not copy — please select and copy manually", "error"); }
+  });
+  document.getElementById("ceOpen").addEventListener("click", () => {
+    const subj = encodeURIComponent(document.getElementById("ceSubject").value);
+    const bod = encodeURIComponent(document.getElementById("ceBody").value);
+    window.open(`mailto:${encodeURIComponent(landlord.email)}?subject=${subj}&body=${bod}`, "_blank");
+  });
+}
+
+/* ---------------------------------------------------------------------
+   TENANT EMAIL MODAL (general status-based email — not a consent request)
+--------------------------------------------------------------------- */
+function openTenantEmailModal(tenantId) {
+  const tenant = DB.tenants.find(t => t.id === tenantId);
+  if (!tenant) return;
+
+  const sig = DB.settings.signature || DEFAULT_SIGNATURE;
+  const templateText = DB.templates.statuses[tenant.status] || DB.templates.statuses["Fresh Data"] || "";
+  const subject = "CrestPoint Management — " + (tenant.status || "Update");
+  const body = mergeTemplate(templateText, tenant) + "\n\n" + sig;
+
+  openModal(`
+    <div class="modal-head">
+      <h3>Send Email — ${escapeHtml(tenant.name || "")}</h3>
+      <button class="icon-btn" id="teClose">${ICONS.x}</button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:12px;">
+        <label>Subject</label>
+        <input type="text" id="teSubject" value="${escapeHtml(subject)}">
+      </div>
+      <div class="field">
+        <label>Body (using the "${escapeHtml(tenant.status || "Fresh Data")}" template — edit freely before sending)</label>
+        <textarea id="teBody" rows="9">${escapeHtml(body)}</textarea>
+      </div>
+      ${!tenant.email ? `<p class="hint" style="color:var(--amber); margin-top:8px;">This tenant has no email saved — you can still copy the message.</p>` : ""}
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="teCopy">${ICONS.copy}Copy Message</button>
+      <button class="btn btn-primary" id="teOpen" ${!tenant.email ? "disabled" : ""}>${ICONS.mail}Open in Email</button>
+    </div>
+  `);
+
+  document.getElementById("teClose").addEventListener("click", closeModal);
+  document.getElementById("teCopy").addEventListener("click", async () => {
+    const text = "Subject: " + document.getElementById("teSubject").value + "\n\n" + document.getElementById("teBody").value;
+    try { await navigator.clipboard.writeText(text); toast("Email copied to clipboard"); }
+    catch (e) { toast("Could not copy — please select and copy manually", "error"); }
+  });
+  document.getElementById("teOpen").addEventListener("click", () => {
+    const subj = encodeURIComponent(document.getElementById("teSubject").value);
+    const bod = encodeURIComponent(document.getElementById("teBody").value);
+    window.open(`mailto:${encodeURIComponent(tenant.email)}?subject=${subj}&body=${bod}`, "_blank");
+  });
+}
+
+/* ---------------------------------------------------------------------
+   SETTINGS VIEW
+--------------------------------------------------------------------- */
+function renderSettings() {
+  const el = document.getElementById("view-settings");
+
+  el.innerHTML = `
+    <div class="card settings-section">
+      <div class="section-head"><div><h2>Commission</h2><div class="sub">Controls how commission is auto-calculated when a monthly rent is entered.</div></div></div>
+      <div class="settings-row">
+        <div>
+          <div class="s-label">Commission Rate</div>
+          <div class="s-desc">Percentage of monthly rent used to auto-fill the Commission field on new and edited landlord records. It's always editable per-record afterwards.</div>
+        </div>
+        <div class="s-control" style="display:flex; align-items:center; gap:8px;">
+          <input type="number" id="settingsCommissionRate" min="0" step="0.5" value="${escapeHtml(DB.settings.commissionRate)}" style="width:100px;">
+          <span style="color:var(--text-dim); font-weight:600;">%</span>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+        <button class="btn btn-primary btn-sm" id="saveCommissionRate">Save Commission Rate</button>
+      </div>
+    </div>
+
+    <div class="card settings-section">
+      <div class="section-head"><div><h2>Company Signature</h2><div class="sub">Appended automatically to WhatsApp messages and the consent email.</div></div></div>
+      <div class="field">
+        <textarea id="settingsSignature" rows="4">${escapeHtml(DB.settings.signature)}</textarea>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+        <button class="btn btn-primary btn-sm" id="saveSignature">Save Signature</button>
+      </div>
+    </div>
+
+    <div class="card settings-section">
+      <div class="section-head"><div><h2>Data Management</h2><div class="sub">Back up or restore all landlord, tenant, template and settings data. Data is saved in this browser only — use Export/Import to move it to another computer or share it with the team.</div></div></div>
+      <div class="settings-row">
+        <div>
+          <div class="s-label">Export All Data</div>
+          <div class="s-desc">Download a full backup of landlords, tenants, templates and settings as a JSON file.</div>
+        </div>
+        <div class="s-control" style="width:auto;">
+          <button class="btn" id="exportDataBtn">${ICONS.download}Export Backup</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="s-label">Import Data</div>
+          <div class="s-desc">Restore from a previously exported backup file. This will overwrite current data.</div>
+        </div>
+        <div class="s-control" style="width:auto;">
+          <button class="btn" id="importDataBtn">${ICONS.upload}Import Backup</button>
+          <input type="file" id="importFileInput" accept="application/json" style="display:none;">
+        </div>
+      </div>
+    </div>
+
+    <div class="danger-zone">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <span style="color:var(--red);">${ICONS.alertTriangle}</span>
+        <h2 style="margin:0; font-size:14.5px; color:var(--red);">Danger Zone</h2>
+      </div>
+      <p class="s-desc" style="margin:0 0 14px 0;">Permanently delete all landlords, tenants and templates. This cannot be undone — export a backup first.</p>
+      <button class="btn btn-danger" id="clearAllDataBtn">${ICONS.trash}Clear All Data</button>
+    </div>
+  `;
+
+  document.getElementById("saveCommissionRate").addEventListener("click", async () => {
+    const val = parseFloat(document.getElementById("settingsCommissionRate").value);
+    if (isNaN(val) || val < 0) { toast("Please enter a valid percentage", "error"); return; }
+    DB.settings.commissionRate = val;
+    const ok = await saveCollection("settings");
+    if (ok) toast("Commission rate saved");
+  });
+
+  document.getElementById("saveSignature").addEventListener("click", async () => {
+    DB.settings.signature = document.getElementById("settingsSignature").value;
+    const ok = await saveCollection("settings");
+    if (ok) toast("Signature saved");
+  });
+
+  document.getElementById("exportDataBtn").addEventListener("click", () => {
+    const backup = {
+      exportedAt: new Date().toISOString(),
+      landlords: DB.landlords,
+      tenants: DB.tenants,
+      templates: DB.templates,
+      settings: DB.settings
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `crestpoint-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("Backup downloaded");
+  });
+
+  document.getElementById("importDataBtn").addEventListener("click", () => document.getElementById("importFileInput").click());
+  document.getElementById("importFileInput").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        confirmDialog({
+          title: "Import this backup?",
+          message: `This will replace all current data with the contents of <strong>${escapeHtml(file.name)}</strong>. This cannot be undone.`,
+          confirmLabel: "Import & Overwrite",
+          onConfirm: async () => {
+            if (Array.isArray(parsed.landlords)) DB.landlords = parsed.landlords;
+            if (Array.isArray(parsed.tenants)) DB.tenants = parsed.tenants;
+            if (parsed.templates && parsed.templates.statuses) DB.templates = parsed.templates;
+            if (parsed.settings) DB.settings = { ...DB.settings, ...parsed.settings };
+            await Promise.all([saveCollection("landlords"), saveCollection("tenants"), saveCollection("templates"), saveCollection("settings")]);
+            toast("Backup imported successfully");
+            renderNav();
+            renderCurrentView();
+          }
+        });
+      } catch (err) {
+        toast("That file doesn't look like a valid backup", "error");
+      }
+      e.target.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById("clearAllDataBtn").addEventListener("click", () => {
+    confirmDialog({
+      title: "Clear all data?",
+      message: `This will permanently delete <strong>all ${DB.landlords.length} landlords</strong> and <strong>all ${DB.tenants.length} tenants</strong>. Templates and settings will be kept. This cannot be undone.`,
+      confirmLabel: "Delete Everything",
+      onConfirm: async () => {
+        DB.landlords = [];
+        DB.tenants = [];
+        await Promise.all([saveCollection("landlords"), saveCollection("tenants")]);
+        toast("All landlord and tenant data cleared");
+        renderNav();
+        renderCurrentView();
+      }
+    });
+  });
+}
+
+/* ---------------------------------------------------------------------
+   INIT
+--------------------------------------------------------------------- */
+async function init() {
+  try {
+    await loadAll();
+    renderNav();
+    goToView("dashboard");
+  } catch (e) {
+    console.error("CrestPoint CRM failed to initialize:", e);
+    const loadingScreen = document.getElementById("loadingScreen");
+    if (loadingScreen) {
+      loadingScreen.innerHTML = `<div style="color:var(--red); font-size:13px; max-width:360px; text-align:center; padding:0 20px;">
+        Something went wrong while loading the CRM. Try refreshing the page. If this keeps happening, check the browser console for details.
+      </div>`;
+    }
+    return;
+  }
+  document.getElementById("loadingScreen").style.display = "none";
+  document.getElementById("app").style.display = "flex";
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const { data } = await sb.auth.getSession();
+  if (data.session) {
+    await bootApp();
+  } else {
+    await showAuthGate();
+  }
+});
+
+</script>
+</body>
+</html>
