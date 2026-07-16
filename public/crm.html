@@ -473,102 +473,123 @@
    Data is stored per-browser under a namespaced key so it won't collide
    with anything else on the same origin.
 --------------------------------------------------------------------- */
-(function initStoragePolyfill() {
-  if (window.storage && typeof window.storage.get === "function") return; // already provided by host
+/* ---------------------------------------------------------------------
+   CLOUD STORAGE (Supabase-backed kv_store)
+   All authenticated users share the same rows in the `kv_store` table,
+   so you and your partner see and edit the same data from any PC.
+--------------------------------------------------------------------- */
+const SUPABASE_URL = "https://hjkvtpjlxxqkjcyutdor.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_HtI5RYzn4PZXYlU1pXZ9Yw_pPlkqqAC";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, storageKey: "crestpoint_auth" }
+});
 
-  const NS = "crestpoint_crm_v1";
-
-  function storageKey(key, shared) {
-    return `${NS}::${shared ? "shared" : "personal"}::${key}`;
+window.storage = {
+  async get(key) {
+    const { data, error } = await sb.from("kv_store").select("value").eq("key", key).maybeSingle();
+    if (error) { console.error("storage.get", error); return null; }
+    if (!data) return null;
+    // value is JSONB; the CRM code stores JSON strings, so re-stringify for compatibility.
+    return { key, value: typeof data.value === "string" ? data.value : JSON.stringify(data.value), shared: true };
+  },
+  async set(key, value) {
+    let parsed = value;
+    try { parsed = JSON.parse(value); } catch (e) { /* keep as string */ }
+    const user = (await sb.auth.getUser()).data.user;
+    const { error } = await sb.from("kv_store").upsert(
+      { key, value: parsed, updated_at: new Date().toISOString(), updated_by: user ? user.id : null },
+      { onConflict: "key" }
+    );
+    if (error) { console.error("storage.set", error); return null; }
+    return { key, value, shared: true };
+  },
+  async delete(key) {
+    const { error } = await sb.from("kv_store").delete().eq("key", key);
+    if (error) { console.error("storage.delete", error); return null; }
+    return { key, deleted: true, shared: true };
+  },
+  async list() {
+    const { data, error } = await sb.from("kv_store").select("key");
+    if (error) { console.error("storage.list", error); return null; }
+    return { keys: (data || []).map(r => r.key), shared: true };
   }
+};
 
-  function isLocalStorageAvailable() {
+/* ---------------------------------------------------------------------
+   AUTH GATE — email/password, shared workspace
+--------------------------------------------------------------------- */
+async function showAuthGate() {
+  document.getElementById("loadingScreen").style.display = "none";
+  document.getElementById("app").style.display = "none";
+  const gate = document.getElementById("authGate");
+  gate.style.display = "flex";
+
+  let mode = "signin";
+  const tabs = gate.querySelectorAll(".auth-tab");
+  const submit = document.getElementById("authSubmit");
+  const errBox = document.getElementById("authError");
+  const pwd = document.getElementById("authPassword");
+
+  tabs.forEach(t => {
+    t.onclick = () => {
+      mode = t.dataset.tab;
+      tabs.forEach(x => {
+        const active = x.dataset.tab === mode;
+        x.style.color = active ? "var(--text)" : "var(--text-dim)";
+        x.style.borderBottomColor = active ? "var(--accent)" : "transparent";
+      });
+      submit.textContent = mode === "signin" ? "Sign in" : "Create account";
+      pwd.autocomplete = mode === "signin" ? "current-password" : "new-password";
+      errBox.style.display = "none";
+    };
+  });
+
+  document.getElementById("authForm").onsubmit = async (e) => {
+    e.preventDefault();
+    errBox.style.display = "none";
+    submit.disabled = true;
+    submit.textContent = mode === "signin" ? "Signing in…" : "Creating…";
+    const email = document.getElementById("authEmail").value.trim();
+    const password = pwd.value;
     try {
-      const testKey = "__crestpoint_test__";
-      localStorage.setItem(testKey, "1");
-      localStorage.removeItem(testKey);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  const available = isLocalStorageAvailable();
-  if (!available) {
-    console.warn("CrestPoint CRM: localStorage is not available in this browser context (e.g. private browsing with storage disabled, or the file was opened with storage blocked). Data will not be saved between visits.");
-  }
-
-  // In-memory fallback used only if localStorage genuinely cannot be accessed,
-  // so the app still runs for the current session instead of crashing.
-  const memoryFallback = {};
-
-  window.storage = {
-    async get(key, shared = false) {
-      const k = storageKey(key, shared);
-      let raw;
-      if (available) {
-        raw = localStorage.getItem(k);
-      } else {
-        raw = Object.prototype.hasOwnProperty.call(memoryFallback, k) ? memoryFallback[k] : null;
+      const fn = mode === "signin" ? sb.auth.signInWithPassword({ email, password })
+                                   : sb.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + "/crm.html" } });
+      const { data, error } = await fn;
+      if (error) throw error;
+      if (mode === "signup" && !data.session) {
+        errBox.textContent = "Account created. Check your email to confirm, then sign in.";
+        errBox.style.color = "var(--green)";
+        errBox.style.display = "block";
+        submit.disabled = false;
+        submit.textContent = "Create account";
+        return;
       }
-      if (raw === null || raw === undefined) return null;
-      return { key, value: raw, shared };
-    },
-
-    async set(key, value, shared = false) {
-      const k = storageKey(key, shared);
-      try {
-        if (available) {
-          localStorage.setItem(k, value);
-        } else {
-          memoryFallback[k] = value;
-        }
-        return { key, value, shared };
-      } catch (e) {
-        console.error("CrestPoint CRM storage error:", e);
-        return null;
-      }
-    },
-
-    async delete(key, shared = false) {
-      const k = storageKey(key, shared);
-      try {
-        if (available) {
-          localStorage.removeItem(k);
-        } else {
-          delete memoryFallback[k];
-        }
-        return { key, deleted: true, shared };
-      } catch (e) {
-        console.error("CrestPoint CRM storage error:", e);
-        return null;
-      }
-    },
-
-    async list(prefix = "", shared = false) {
-      const fullPrefix = storageKey(prefix, shared);
-      const keys = [];
-      try {
-        if (available) {
-          for (let i = 0; i < localStorage.length; i++) {
-            const lk = localStorage.key(i);
-            if (lk && lk.indexOf(fullPrefix) === 0) {
-              keys.push(lk.slice(storageKey("", shared).length));
-            }
-          }
-        } else {
-          Object.keys(memoryFallback).forEach(lk => {
-            if (lk.indexOf(fullPrefix) === 0) keys.push(lk.slice(storageKey("", shared).length));
-          });
-        }
-        return { keys, prefix, shared };
-      } catch (e) {
-        console.error("CrestPoint CRM storage error:", e);
-        return null;
-      }
+      gate.style.display = "none";
+      await bootApp();
+    } catch (err) {
+      errBox.textContent = err.message || "Something went wrong";
+      errBox.style.color = "var(--red)";
+      errBox.style.display = "block";
+      submit.disabled = false;
+      submit.textContent = mode === "signin" ? "Sign in" : "Create account";
     }
   };
-})();
+}
+
+async function bootApp() {
+  document.getElementById("loadingScreen").style.display = "flex";
+  const user = (await sb.auth.getUser()).data.user;
+  if (user) {
+    const el = document.getElementById("signedInAs");
+    if (el) el.textContent = "Signed in as " + user.email;
+  }
+  await init();
+}
+
+document.getElementById("signOutBtn").addEventListener("click", async () => {
+  await sb.auth.signOut();
+  location.reload();
+});
 
 /* ---------------------------------------------------------------------
    CONSTANTS
