@@ -1017,6 +1017,8 @@ function landlordFormFields(l = {}, idPrefix = "lf") {
         <input type="tel" id="${idPrefix}_phone" value="${escapeHtml(g("phone"))}" placeholder="07xxx xxxxxx" required></div>
       <div class="field"><label for="${idPrefix}_email">Email</label>
         <input type="email" id="${idPrefix}_email" value="${escapeHtml(g("email"))}" placeholder="name@example.com"></div>
+      <div class="field"><label for="${idPrefix}_addLink">Add Link</label>
+        <input type="url" id="${idPrefix}_addLink" value="${escapeHtml(g("addLink"))}" placeholder="https://example.com/listing"></div>
       <div class="field"><label for="${idPrefix}_status">Status</label>
         <select id="${idPrefix}_status">${STATUSES.map(s => `<option value="${s}" ${g("status", "Fresh Data") === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
 
@@ -1113,6 +1115,7 @@ function readLandlordForm(idPrefix) {
     name: v("name").trim(),
     phone: v("phone").trim(),
     email: v("email").trim(),
+    addLink: v("addLink").trim(),
     status: v("status"),
     doorNumber: v("doorNumber").trim(),
     street: v("street").trim(),
