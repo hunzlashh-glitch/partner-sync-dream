@@ -1098,7 +1098,10 @@ function landlordFormFields(l = {}, idPrefix = "lf") {
       <div class="field span-2"><label for="${idPrefix}_nearbyTransportLinks">Nearby Transport Links</label>
         <input type="text" id="${idPrefix}_nearbyTransportLinks" value="${escapeHtml(g("nearbyTransportLinks"))}" placeholder="e.g. 5 min walk to Oxford Road station"></div>
       <div class="field span-2"><label for="${idPrefix}_localAmenities">Local Amenities</label>
-        <input type="text" id="${idPrefix}_localAmenities" value="${escapeHtml(g("localAmenities"))}" placeholder="e.g. Tesco Express, gym, park nearby"></div>
+        <div style="display:flex; gap:10px; align-items:stretch;">
+          ${yesNoInline(idPrefix, "hasLocalAmenities", g("hasLocalAmenities"))}
+          <input type="text" id="${idPrefix}_localAmenities" value="${escapeHtml(g("localAmenities"))}" placeholder="e.g. Tesco Express, gym, park nearby" style="flex:1;">
+        </div></div>
 
       <div class="form-divider">Notes</div>
       <div class="field span-3"><label for="${idPrefix}_houseRules">House Rules</label>
