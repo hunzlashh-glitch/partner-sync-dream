@@ -1119,6 +1119,41 @@ function checkRow(idPrefix, key, label, checked) {
   </div>`;
 }
 
+function yesNoRow(idPrefix, key, label, checked) {
+  const id = `${idPrefix}_${key}`;
+  const isYes = !!checked;
+  return `<div class="feature-row">
+    <span class="feature-label">${label}</span>
+    <input type="checkbox" id="${id}" ${isYes ? "checked" : ""} style="display:none;">
+    <div class="yesno" data-target="${id}">
+      <button type="button" data-val="yes" class="${isYes ? "active" : ""}" onclick="setYesNo('${id}', true)">Yes</button>
+      <button type="button" data-val="no" class="${!isYes ? "active" : ""}" onclick="setYesNo('${id}', false)">No</button>
+    </div>
+  </div>`;
+}
+
+function yesNoInline(idPrefix, key, checked) {
+  const id = `${idPrefix}_${key}`;
+  const isYes = !!checked;
+  return `<input type="checkbox" id="${id}" ${isYes ? "checked" : ""} style="display:none;">
+    <div class="yesno" data-target="${id}" style="align-self:center;">
+      <button type="button" data-val="yes" class="${isYes ? "active" : ""}" onclick="setYesNo('${id}', true)">Yes</button>
+      <button type="button" data-val="no" class="${!isYes ? "active" : ""}" onclick="setYesNo('${id}', false)">No</button>
+    </div>`;
+}
+
+window.setYesNo = function(id, val) {
+  const cb = document.getElementById(id);
+  if (!cb) return;
+  cb.checked = val;
+  const wrap = document.querySelector(`.yesno[data-target="${id}"]`);
+  if (!wrap) return;
+  wrap.querySelectorAll("button").forEach(b => {
+    b.classList.toggle("active", (b.dataset.val === "yes") === val);
+  });
+};
+
+
 function wireCommissionAutoCalc(idPrefix) {
   const rentEl = document.getElementById(`${idPrefix}_monthlyRent`);
   const commEl = document.getElementById(`${idPrefix}_commission`);
