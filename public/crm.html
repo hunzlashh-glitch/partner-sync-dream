@@ -1081,12 +1081,12 @@ function landlordFormFields(l = {}, idPrefix = "lf") {
 
       <div class="form-divider">Features</div>
       <div class="field span-3">
-        <div class="checks-grid">
-          ${checkRow(idPrefix, "billsIncluded", "Bills Included", g("billsIncluded"))}
-          ${checkRow(idPrefix, "privateGarden", "Private Garden", g("privateGarden"))}
-          ${checkRow(idPrefix, "freeParking", "Free Parking", g("freeParking"))}
-          ${checkRow(idPrefix, "couplesAllowed", "Couples Allowed", g("couplesAllowed"))}
-          ${checkRow(idPrefix, "universalCreditDSS", "Universal Credit / DSS Accepted", g("universalCreditDSS"))}
+        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px 12px;">
+          ${yesNoRow(idPrefix, "billsIncluded", "Bills Included", g("billsIncluded"))}
+          ${yesNoRow(idPrefix, "privateGarden", "Private Garden", g("privateGarden"))}
+          ${yesNoRow(idPrefix, "freeParking", "Free Parking", g("freeParking"))}
+          ${yesNoRow(idPrefix, "couplesAllowed", "Couples Allowed", g("couplesAllowed"))}
+          ${yesNoRow(idPrefix, "universalCreditDSS", "Universal Credit / DSS Accepted", g("universalCreditDSS"))}
         </div>
       </div>
       <div class="field"><label for="${idPrefix}_furnished">Furnished</label>
