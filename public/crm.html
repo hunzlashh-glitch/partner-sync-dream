@@ -91,13 +91,15 @@
     margin-bottom:16px;
   }
   .brand-mark{
-    width:34px;height:34px;border-radius:9px;
-    background:linear-gradient(145deg, var(--accent), var(--accent-strong));
+    width:38px;height:38px;border-radius:9px;
+    background:#000;
     display:flex;align-items:center;justify-content:center;
-    font-weight:800; font-size:15px; color:#04211d;
     flex-shrink:0;
-    box-shadow: 0 3px 10px rgba(63,184,172,0.25);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+    overflow:hidden;
   }
+  .brand-mark img{ width:100%; height:100%; object-fit:contain; }
+
   .brand-text{ line-height:1.2; }
   .brand-text .name{ font-weight:700; font-size:14.5px; letter-spacing:.2px; }
   .brand-text .sub{ font-size:11px; color:var(--text-faint); font-weight:500; }
@@ -244,8 +246,26 @@
   select{ appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2398a0ad'><path d='M5.5 7.5l4.5 4.5 4.5-4.5' stroke='%2398a0ad' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>"); background-repeat:no-repeat; background-position:right 10px center; padding-right:30px; }
 
   .check-row{ display:flex; align-items:center; gap:8px; padding:9px 2px; }
-  .check-row input[type=checkbox]{ width:16px; height:16px; accent-color:var(--accent); cursor:pointer; }
-  .check-row label{ font-size:13px; color:var(--text); font-weight:500; cursor:pointer; }
+ .check-row input[type=checkbox]{ width:16px; height:16px; accent-color:var(--accent); cursor:pointer; }
+ .check-row label{ font-size:13px; color:var(--text); font-weight:500; cursor:pointer; }
+ .feature-row{
+   display:flex; align-items:center; justify-content:space-between;
+   padding:10px 14px; background:var(--bg-elev-2);
+   border:1px solid var(--border); border-radius:10px;
+   margin-bottom:8px; transition:border-color .15s;
+ }
+ .feature-row:hover{ border-color:var(--border-light); }
+ .feature-row .feature-label{ font-size:13px; color:var(--text); font-weight:500; }
+ .yesno{ display:inline-flex; background:var(--bg); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+ .yesno button{
+   background:transparent; border:none; color:var(--text-faint);
+   padding:6px 16px; font-size:12px; font-weight:600; cursor:pointer;
+   transition:all .15s; font-family:inherit;
+ }
+ .yesno button:hover{ color:var(--text); }
+ .yesno button.active[data-val="yes"]{ background:var(--accent); color:#04211d; }
+ .yesno button.active[data-val="no"]{ background:var(--bg-elev-2); color:var(--text); }
+
   .checks-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:2px 12px; }
 
   .form-divider{ grid-column:1/-1; border-top:1px solid var(--border); margin:4px 0 2px 0; padding-top:14px; font-size:11.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--text-faint); }
@@ -393,7 +413,7 @@
 <div id="authGate" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:9999; align-items:center; justify-content:center; padding:20px;">
   <div style="width:100%; max-width:380px; background:var(--bg-elev); border:1px solid var(--border); border-radius:14px; padding:28px; box-shadow:var(--shadow);">
     <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-      <div style="width:36px;height:36px;border-radius:8px;background:var(--accent);color:#0c0e12;display:flex;align-items:center;justify-content:center;font-weight:700;">CP</div>
+      <div style="width:38px;height:38px;border-radius:8px;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"><img src="/favicon.png" alt="CrestPoint" style="width:100%;height:100%;object-fit:contain;"></div>
       <div>
         <div style="font-weight:700;font-size:15px;">CrestPoint CRM</div>
         <div style="font-size:11.5px;color:var(--text-faint);">Shared workspace login</div>
@@ -421,7 +441,7 @@
   <!-- SIDEBAR -->
   <aside id="sidebar">
     <div class="brand">
-      <div class="brand-mark">CP</div>
+      <div class="brand-mark"><img src="/favicon.png" alt="CrestPoint"></div>
       <div class="brand-text">
         <div class="name">CrestPoint</div>
         <div class="sub">Management CRM</div>
@@ -609,7 +629,7 @@ const STATUS_CLASS = {
 };
 
 const PROPERTY_TYPES = ["House", "Flat/Apartment", "Studio", "HMO", "Bungalow", "Maisonette", "Other"];
-const ROOM_TYPES = ["Whole Property", "Single Room", "Double Room", "Twin Room", "Ensuite Room"];
+const ROOM_TYPES = ["Whole Property", "Single Room", "Double Room", "Twin Room", "Ensuite Room", "Master Room"];
 const FURNISHED_OPTIONS = ["Furnished", "Unfurnished", "Part-Furnished"];
 
 const DEFAULT_SIGNATURE = "CrestPoint Management\ninfo@crestpointmanagement.co.uk\n020 4578 9428 | 07307 223971";
@@ -1061,12 +1081,12 @@ function landlordFormFields(l = {}, idPrefix = "lf") {
 
       <div class="form-divider">Features</div>
       <div class="field span-3">
-        <div class="checks-grid">
-          ${checkRow(idPrefix, "billsIncluded", "Bills Included", g("billsIncluded"))}
-          ${checkRow(idPrefix, "privateGarden", "Private Garden", g("privateGarden"))}
-          ${checkRow(idPrefix, "freeParking", "Free Parking", g("freeParking"))}
-          ${checkRow(idPrefix, "couplesAllowed", "Couples Allowed", g("couplesAllowed"))}
-          ${checkRow(idPrefix, "universalCreditDSS", "Universal Credit / DSS Accepted", g("universalCreditDSS"))}
+        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px 12px;">
+          ${yesNoRow(idPrefix, "billsIncluded", "Bills Included", g("billsIncluded"))}
+          ${yesNoRow(idPrefix, "privateGarden", "Private Garden", g("privateGarden"))}
+          ${yesNoRow(idPrefix, "freeParking", "Free Parking", g("freeParking"))}
+          ${yesNoRow(idPrefix, "couplesAllowed", "Couples Allowed", g("couplesAllowed"))}
+          ${yesNoRow(idPrefix, "universalCreditDSS", "Universal Credit / DSS Accepted", g("universalCreditDSS"))}
         </div>
       </div>
       <div class="field"><label for="${idPrefix}_furnished">Furnished</label>
@@ -1078,7 +1098,10 @@ function landlordFormFields(l = {}, idPrefix = "lf") {
       <div class="field span-2"><label for="${idPrefix}_nearbyTransportLinks">Nearby Transport Links</label>
         <input type="text" id="${idPrefix}_nearbyTransportLinks" value="${escapeHtml(g("nearbyTransportLinks"))}" placeholder="e.g. 5 min walk to Oxford Road station"></div>
       <div class="field span-2"><label for="${idPrefix}_localAmenities">Local Amenities</label>
-        <input type="text" id="${idPrefix}_localAmenities" value="${escapeHtml(g("localAmenities"))}" placeholder="e.g. Tesco Express, gym, park nearby"></div>
+        <div style="display:flex; gap:10px; align-items:stretch;">
+          ${yesNoInline(idPrefix, "hasLocalAmenities", g("hasLocalAmenities"))}
+          <input type="text" id="${idPrefix}_localAmenities" value="${escapeHtml(g("localAmenities"))}" placeholder="e.g. Tesco Express, gym, park nearby" style="flex:1;">
+        </div></div>
 
       <div class="form-divider">Notes</div>
       <div class="field span-3"><label for="${idPrefix}_houseRules">House Rules</label>
@@ -1095,6 +1118,41 @@ function checkRow(idPrefix, key, label, checked) {
     <label for="${idPrefix}_${key}">${label}</label>
   </div>`;
 }
+
+function yesNoRow(idPrefix, key, label, checked) {
+  const id = `${idPrefix}_${key}`;
+  const isYes = !!checked;
+  return `<div class="feature-row">
+    <span class="feature-label">${label}</span>
+    <input type="checkbox" id="${id}" ${isYes ? "checked" : ""} style="display:none;">
+    <div class="yesno" data-target="${id}">
+      <button type="button" data-val="yes" class="${isYes ? "active" : ""}" onclick="setYesNo('${id}', true)">Yes</button>
+      <button type="button" data-val="no" class="${!isYes ? "active" : ""}" onclick="setYesNo('${id}', false)">No</button>
+    </div>
+  </div>`;
+}
+
+function yesNoInline(idPrefix, key, checked) {
+  const id = `${idPrefix}_${key}`;
+  const isYes = !!checked;
+  return `<input type="checkbox" id="${id}" ${isYes ? "checked" : ""} style="display:none;">
+    <div class="yesno" data-target="${id}" style="align-self:center;">
+      <button type="button" data-val="yes" class="${isYes ? "active" : ""}" onclick="setYesNo('${id}', true)">Yes</button>
+      <button type="button" data-val="no" class="${!isYes ? "active" : ""}" onclick="setYesNo('${id}', false)">No</button>
+    </div>`;
+}
+
+window.setYesNo = function(id, val) {
+  const cb = document.getElementById(id);
+  if (!cb) return;
+  cb.checked = val;
+  const wrap = document.querySelector(`.yesno[data-target="${id}"]`);
+  if (!wrap) return;
+  wrap.querySelectorAll("button").forEach(b => {
+    b.classList.toggle("active", (b.dataset.val === "yes") === val);
+  });
+};
+
 
 function wireCommissionAutoCalc(idPrefix) {
   const rentEl = document.getElementById(`${idPrefix}_monthlyRent`);
@@ -1142,6 +1200,7 @@ function readLandlordForm(idPrefix) {
     noOfPeople: v("noOfPeople"),
     nearbyTransportLinks: v("nearbyTransportLinks").trim(),
     localAmenities: v("localAmenities").trim(),
+    hasLocalAmenities: c("hasLocalAmenities"),
     houseRules: v("houseRules").trim(),
     notes: v("notes").trim()
   };
