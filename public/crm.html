@@ -1111,6 +1111,16 @@ function landlordFormFields(l = {}, idPrefix = "lf") {
         <textarea id="${idPrefix}_houseRules" placeholder="e.g. No smoking indoors, no pets">${escapeHtml(g("houseRules"))}</textarea></div>
       <div class="field span-3"><label for="${idPrefix}_notes">Internal Notes</label>
         <textarea id="${idPrefix}_notes" placeholder="Anything else worth remembering about this landlord or property">${escapeHtml(g("notes"))}</textarea></div>
+
+      <div class="form-divider">Attachment</div>
+      <div class="field span-3"><label for="${idPrefix}_attachmentFile">Attach file (screenshot, PDF, etc. — max 3 MB)</label>
+        <input type="file" id="${idPrefix}_attachmentFile" accept="image/*,application/pdf" style="padding:8px;">
+        <input type="hidden" id="${idPrefix}_attachmentData" value="${escapeHtml(g("attachmentData"))}">
+        <input type="hidden" id="${idPrefix}_attachmentName" value="${escapeHtml(g("attachmentName"))}">
+        <div id="${idPrefix}_attachmentPreview" style="margin-top:8px; font-size:12px; color:var(--text-faint);">
+          ${g("attachmentData") ? `<a href="${g("attachmentData")}" target="_blank" rel="noopener" style="color:var(--accent);">📎 ${escapeHtml(g("attachmentName") || "View attached file")}</a> · <button type="button" onclick="clearAttachment('${idPrefix}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;">Remove</button>` : "No file attached"}
+        </div>
+      </div>
     </div>
   `;
 }
