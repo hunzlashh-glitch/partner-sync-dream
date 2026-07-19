@@ -1132,39 +1132,67 @@ function checkRow(idPrefix, key, label, checked) {
   </div>`;
 }
 
-function yesNoRow(idPrefix, key, label, checked) {
+function yesNoRow(idPrefix, key, label, current) {
   const id = `${idPrefix}_${key}`;
-  const isYes = !!checked;
+  const val = normalizeYesNo(current);
   return `<div class="feature-row">
     <span class="feature-label">${label}</span>
-    <input type="checkbox" id="${id}" ${isYes ? "checked" : ""} style="display:none;">
-    <div class="yesno" data-target="${id}">
-      <button type="button" data-val="yes" class="${isYes ? "active" : ""}" onclick="setYesNo('${id}', true)">Yes</button>
-      <button type="button" data-val="no" class="${!isYes ? "active" : ""}" onclick="setYesNo('${id}', false)">No</button>
-    </div>
+    <select id="${id}" style="max-width:130px;">
+      <option value="" ${val === "" ? "selected" : ""}>—</option>
+      <option value="yes" ${val === "yes" ? "selected" : ""}>Yes</option>
+      <option value="no" ${val === "no" ? "selected" : ""}>No</option>
+    </select>
   </div>`;
 }
 
-function yesNoInline(idPrefix, key, checked) {
+function yesNoInline(idPrefix, key, current) {
   const id = `${idPrefix}_${key}`;
-  const isYes = !!checked;
-  return `<input type="checkbox" id="${id}" ${isYes ? "checked" : ""} style="display:none;">
-    <div class="yesno" data-target="${id}" style="align-self:center;">
-      <button type="button" data-val="yes" class="${isYes ? "active" : ""}" onclick="setYesNo('${id}', true)">Yes</button>
-      <button type="button" data-val="no" class="${!isYes ? "active" : ""}" onclick="setYesNo('${id}', false)">No</button>
-    </div>`;
+  const val = normalizeYesNo(current);
+  return `<select id="${id}" style="max-width:110px; align-self:center;">
+    <option value="" ${val === "" ? "selected" : ""}>—</option>
+    <option value="yes" ${val === "yes" ? "selected" : ""}>Yes</option>
+    <option value="no" ${val === "no" ? "selected" : ""}>No</option>
+  </select>`;
 }
 
-window.setYesNo = function(id, val) {
-  const cb = document.getElementById(id);
-  if (!cb) return;
-  cb.checked = val;
-  const wrap = document.querySelector(`.yesno[data-target="${id}"]`);
-  if (!wrap) return;
-  wrap.querySelectorAll("button").forEach(b => {
-    b.classList.toggle("active", (b.dataset.val === "yes") === val);
-  });
+function normalizeYesNo(v) {
+  if (v === true || v === "yes" || v === "Yes") return "yes";
+  if (v === false || v === "no" || v === "No") return "no";
+  return "";
+}
+
+window.clearAttachment = function(idPrefix) {
+  const dataEl = document.getElementById(`${idPrefix}_attachmentData`);
+  const nameEl = document.getElementById(`${idPrefix}_attachmentName`);
+  const fileEl = document.getElementById(`${idPrefix}_attachmentFile`);
+  const prev = document.getElementById(`${idPrefix}_attachmentPreview`);
+  if (dataEl) dataEl.value = "";
+  if (nameEl) nameEl.value = "";
+  if (fileEl) fileEl.value = "";
+  if (prev) prev.textContent = "No file attached";
 };
+
+function wireAttachmentInput(idPrefix) {
+  const fileEl = document.getElementById(`${idPrefix}_attachmentFile`);
+  if (!fileEl) return;
+  fileEl.addEventListener("change", () => {
+    const f = fileEl.files && fileEl.files[0];
+    if (!f) return;
+    if (f.size > 3 * 1024 * 1024) {
+      toast("File too large — please choose a file under 3 MB", "error");
+      fileEl.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      document.getElementById(`${idPrefix}_attachmentData`).value = reader.result;
+      document.getElementById(`${idPrefix}_attachmentName`).value = f.name;
+      const prev = document.getElementById(`${idPrefix}_attachmentPreview`);
+      prev.innerHTML = `<a href="${reader.result}" target="_blank" rel="noopener" style="color:var(--accent);">📎 ${escapeHtml(f.name)}</a> · <button type="button" onclick="clearAttachment('${idPrefix}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;">Remove</button>`;
+    };
+    reader.readAsDataURL(f);
+  });
+}
 
 
 function wireCommissionAutoCalc(idPrefix) {
