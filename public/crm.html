@@ -1211,7 +1211,6 @@ function wireCommissionAutoCalc(idPrefix) {
 
 function readLandlordForm(idPrefix) {
   const v = (id) => document.getElementById(`${idPrefix}_${id}`).value;
-  const c = (id) => document.getElementById(`${idPrefix}_${id}`).checked;
   return {
     name: v("name").trim(),
     phone: v("phone").trim(),
@@ -1232,18 +1231,20 @@ function readLandlordForm(idPrefix) {
     deposit: v("deposit"),
     commission: v("commission"),
     availableFrom: v("availableFrom"),
-    billsIncluded: c("billsIncluded"),
-    privateGarden: c("privateGarden"),
-    freeParking: c("freeParking"),
-    couplesAllowed: c("couplesAllowed"),
-    universalCreditDSS: c("universalCreditDSS"),
+    billsIncluded: v("billsIncluded"),
+    privateGarden: v("privateGarden"),
+    freeParking: v("freeParking"),
+    couplesAllowed: v("couplesAllowed"),
+    universalCreditDSS: v("universalCreditDSS"),
     furnished: v("furnished"),
     noOfPeople: v("noOfPeople"),
     nearbyTransportLinks: v("nearbyTransportLinks").trim(),
     localAmenities: v("localAmenities").trim(),
-    hasLocalAmenities: c("hasLocalAmenities"),
+    hasLocalAmenities: v("hasLocalAmenities"),
     houseRules: v("houseRules").trim(),
-    notes: v("notes").trim()
+    notes: v("notes").trim(),
+    attachmentData: v("attachmentData"),
+    attachmentName: v("attachmentName")
   };
 }
 
