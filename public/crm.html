@@ -304,6 +304,7 @@
   .badge-confirmed{ background:var(--green-soft); color:var(--green); }
   .badge-callback{ background:var(--amber-soft); color:var(--amber); }
   .badge-voicemail{ background:var(--purple-soft); color:var(--purple); }
+  .badge-notanswered{ background:var(--amber-soft); color:var(--amber); }
   .badge-notinterested{ background:var(--gray-soft); color:var(--gray); }
   .badge-rejection{ background:var(--red-soft); color:var(--red); }
   .badge-received{ background:var(--accent-soft); color:var(--accent); }
@@ -616,13 +617,14 @@ document.getElementById("signOutBtn").addEventListener("click", async () => {
 /* ---------------------------------------------------------------------
    CONSTANTS
 --------------------------------------------------------------------- */
-const STATUSES = ["Fresh Data", "Confirmed", "Call Back", "VoiceMail", "Not Interested", "Rejection", "Received"];
+const STATUSES = ["Fresh Data", "Confirmed", "Call Back", "VoiceMail", "Not Answered", "Not Interested", "Rejection", "Received"];
 
 const STATUS_CLASS = {
   "Fresh Data": "badge-freshdata",
   "Confirmed": "badge-confirmed",
   "Call Back": "badge-callback",
   "VoiceMail": "badge-voicemail",
+  "Not Answered": "badge-notanswered",
   "Not Interested": "badge-notinterested",
   "Rejection": "badge-rejection",
   "Received": "badge-received"
@@ -639,6 +641,7 @@ const DEFAULT_TEMPLATES = {
   "Confirmed": "Hi {{name}}, great news — everything is now confirmed on our end. We'll keep you updated every step of the way.",
   "Call Back": "Hi {{name}}, we tried to reach you earlier. When would be a good time for us to call you back?",
   "VoiceMail": "Hi {{name}}, this is CrestPoint Management. We left you a voicemail — please call us back at your earliest convenience or reply here so we can assist further.",
+  "Not Answered": "Hi {{name}}, this is CrestPoint Management. We tried calling but couldn't reach you. Please let us know a good time to call you back.",
   "Not Interested": "Hi {{name}}, thank you for letting us know. If anything changes in future, we'd be happy to help. Wishing you all the best.",
   "Rejection": "Hi {{name}}, thank you for your patience. Unfortunately we're unable to proceed at this time. Please don't hesitate to reach out if anything changes.",
   "Received": "Hi {{name}}, we can confirm we've received the information we needed. Thank you — we'll be in touch shortly with next steps."
@@ -774,6 +777,49 @@ async function saveCollection(name) {
     toast("Could not save — please try again", "error");
     return false;
   }
+}
+
+/* Read-modify-write helpers to avoid stale overwrites between partners/tabs.
+   Always fetches the latest landlords array from the DB first, applies the
+   change on the fresh copy, then saves. */
+async function reloadLandlords() {
+  const r = await window.storage.get("landlords", true);
+  if (r && r.value) {
+    try { DB.landlords = JSON.parse(r.value) || []; } catch (e) { /* keep */ }
+  }
+}
+async function updateLandlordSafe(id, patch) {
+  await reloadLandlords();
+  const idx = DB.landlords.findIndex(l => l.id === id);
+  if (idx === -1) { toast("This record no longer exists", "error"); return false; }
+  DB.landlords[idx] = { ...DB.landlords[idx], ...patch, updatedAt: new Date().toISOString() };
+  return await saveCollection("landlords");
+}
+async function addLandlordSafe(data) {
+  await reloadLandlords();
+  DB.landlords.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  return await saveCollection("landlords");
+}
+async function updateTenantSafe(id, patch) {
+  const r = await window.storage.get("tenants", true);
+  if (r && r.value) { try { DB.tenants = JSON.parse(r.value) || []; } catch (e) {} }
+  const idx = DB.tenants.findIndex(t => t.id === id);
+  if (idx === -1) { toast("This record no longer exists", "error"); return false; }
+  DB.tenants[idx] = { ...DB.tenants[idx], ...patch, updatedAt: new Date().toISOString() };
+  return await saveCollection("tenants");
+}
+
+/* Background refresh — pulls latest data every 15s so both partners
+   see each other's changes without a full page reload. */
+function startAutoRefresh() {
+  setInterval(async () => {
+    if (document.hidden) return;
+    if (document.getElementById("activeModalOverlay")) return; // don't clobber open modals
+    const before = JSON.stringify(DB.landlords) + JSON.stringify(DB.tenants);
+    await loadAll();
+    const after = JSON.stringify(DB.landlords) + JSON.stringify(DB.tenants);
+    if (before !== after) { renderNav(); renderCurrentView(); }
+  }, 15000);
 }
 
 /* ---------------------------------------------------------------------
@@ -1108,6 +1154,16 @@ function landlordFormFields(l = {}, idPrefix = "lf") {
         <textarea id="${idPrefix}_houseRules" placeholder="e.g. No smoking indoors, no pets">${escapeHtml(g("houseRules"))}</textarea></div>
       <div class="field span-3"><label for="${idPrefix}_notes">Internal Notes</label>
         <textarea id="${idPrefix}_notes" placeholder="Anything else worth remembering about this landlord or property">${escapeHtml(g("notes"))}</textarea></div>
+
+      <div class="form-divider">Attachment</div>
+      <div class="field span-3"><label for="${idPrefix}_attachmentFile">Attach file (screenshot, PDF, etc. — max 3 MB)</label>
+        <input type="file" id="${idPrefix}_attachmentFile" accept="image/*,application/pdf" style="padding:8px;">
+        <input type="hidden" id="${idPrefix}_attachmentData" value="${escapeHtml(g("attachmentData"))}">
+        <input type="hidden" id="${idPrefix}_attachmentName" value="${escapeHtml(g("attachmentName"))}">
+        <div id="${idPrefix}_attachmentPreview" style="margin-top:8px; font-size:12px; color:var(--text-faint);">
+          ${g("attachmentData") ? `<a href="${g("attachmentData")}" target="_blank" rel="noopener" style="color:var(--accent);">📎 ${escapeHtml(g("attachmentName") || "View attached file")}</a> · <button type="button" onclick="clearAttachment('${idPrefix}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;">Remove</button>` : "No file attached"}
+        </div>
+      </div>
     </div>
   `;
 }
@@ -1119,39 +1175,67 @@ function checkRow(idPrefix, key, label, checked) {
   </div>`;
 }
 
-function yesNoRow(idPrefix, key, label, checked) {
+function yesNoRow(idPrefix, key, label, current) {
   const id = `${idPrefix}_${key}`;
-  const isYes = !!checked;
+  const val = normalizeYesNo(current);
   return `<div class="feature-row">
     <span class="feature-label">${label}</span>
-    <input type="checkbox" id="${id}" ${isYes ? "checked" : ""} style="display:none;">
-    <div class="yesno" data-target="${id}">
-      <button type="button" data-val="yes" class="${isYes ? "active" : ""}" onclick="setYesNo('${id}', true)">Yes</button>
-      <button type="button" data-val="no" class="${!isYes ? "active" : ""}" onclick="setYesNo('${id}', false)">No</button>
-    </div>
+    <select id="${id}" style="max-width:130px;">
+      <option value="" ${val === "" ? "selected" : ""}>—</option>
+      <option value="yes" ${val === "yes" ? "selected" : ""}>Yes</option>
+      <option value="no" ${val === "no" ? "selected" : ""}>No</option>
+    </select>
   </div>`;
 }
 
-function yesNoInline(idPrefix, key, checked) {
+function yesNoInline(idPrefix, key, current) {
   const id = `${idPrefix}_${key}`;
-  const isYes = !!checked;
-  return `<input type="checkbox" id="${id}" ${isYes ? "checked" : ""} style="display:none;">
-    <div class="yesno" data-target="${id}" style="align-self:center;">
-      <button type="button" data-val="yes" class="${isYes ? "active" : ""}" onclick="setYesNo('${id}', true)">Yes</button>
-      <button type="button" data-val="no" class="${!isYes ? "active" : ""}" onclick="setYesNo('${id}', false)">No</button>
-    </div>`;
+  const val = normalizeYesNo(current);
+  return `<select id="${id}" style="max-width:110px; align-self:center;">
+    <option value="" ${val === "" ? "selected" : ""}>—</option>
+    <option value="yes" ${val === "yes" ? "selected" : ""}>Yes</option>
+    <option value="no" ${val === "no" ? "selected" : ""}>No</option>
+  </select>`;
 }
 
-window.setYesNo = function(id, val) {
-  const cb = document.getElementById(id);
-  if (!cb) return;
-  cb.checked = val;
-  const wrap = document.querySelector(`.yesno[data-target="${id}"]`);
-  if (!wrap) return;
-  wrap.querySelectorAll("button").forEach(b => {
-    b.classList.toggle("active", (b.dataset.val === "yes") === val);
-  });
+function normalizeYesNo(v) {
+  if (v === true || v === "yes" || v === "Yes") return "yes";
+  if (v === false || v === "no" || v === "No") return "no";
+  return "";
+}
+
+window.clearAttachment = function(idPrefix) {
+  const dataEl = document.getElementById(`${idPrefix}_attachmentData`);
+  const nameEl = document.getElementById(`${idPrefix}_attachmentName`);
+  const fileEl = document.getElementById(`${idPrefix}_attachmentFile`);
+  const prev = document.getElementById(`${idPrefix}_attachmentPreview`);
+  if (dataEl) dataEl.value = "";
+  if (nameEl) nameEl.value = "";
+  if (fileEl) fileEl.value = "";
+  if (prev) prev.textContent = "No file attached";
 };
+
+function wireAttachmentInput(idPrefix) {
+  const fileEl = document.getElementById(`${idPrefix}_attachmentFile`);
+  if (!fileEl) return;
+  fileEl.addEventListener("change", () => {
+    const f = fileEl.files && fileEl.files[0];
+    if (!f) return;
+    if (f.size > 3 * 1024 * 1024) {
+      toast("File too large — please choose a file under 3 MB", "error");
+      fileEl.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      document.getElementById(`${idPrefix}_attachmentData`).value = reader.result;
+      document.getElementById(`${idPrefix}_attachmentName`).value = f.name;
+      const prev = document.getElementById(`${idPrefix}_attachmentPreview`);
+      prev.innerHTML = `<a href="${reader.result}" target="_blank" rel="noopener" style="color:var(--accent);">📎 ${escapeHtml(f.name)}</a> · <button type="button" onclick="clearAttachment('${idPrefix}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;">Remove</button>`;
+    };
+    reader.readAsDataURL(f);
+  });
+}
 
 
 function wireCommissionAutoCalc(idPrefix) {
@@ -1170,7 +1254,6 @@ function wireCommissionAutoCalc(idPrefix) {
 
 function readLandlordForm(idPrefix) {
   const v = (id) => document.getElementById(`${idPrefix}_${id}`).value;
-  const c = (id) => document.getElementById(`${idPrefix}_${id}`).checked;
   return {
     name: v("name").trim(),
     phone: v("phone").trim(),
@@ -1191,18 +1274,20 @@ function readLandlordForm(idPrefix) {
     deposit: v("deposit"),
     commission: v("commission"),
     availableFrom: v("availableFrom"),
-    billsIncluded: c("billsIncluded"),
-    privateGarden: c("privateGarden"),
-    freeParking: c("freeParking"),
-    couplesAllowed: c("couplesAllowed"),
-    universalCreditDSS: c("universalCreditDSS"),
+    billsIncluded: v("billsIncluded"),
+    privateGarden: v("privateGarden"),
+    freeParking: v("freeParking"),
+    couplesAllowed: v("couplesAllowed"),
+    universalCreditDSS: v("universalCreditDSS"),
     furnished: v("furnished"),
     noOfPeople: v("noOfPeople"),
     nearbyTransportLinks: v("nearbyTransportLinks").trim(),
     localAmenities: v("localAmenities").trim(),
-    hasLocalAmenities: c("hasLocalAmenities"),
+    hasLocalAmenities: v("hasLocalAmenities"),
     houseRules: v("houseRules").trim(),
-    notes: v("notes").trim()
+    notes: v("notes").trim(),
+    attachmentData: v("attachmentData"),
+    attachmentName: v("attachmentName")
   };
 }
 
@@ -1235,6 +1320,7 @@ function openLandlordModal(landlordId = null) {
   `);
 
   wireCommissionAutoCalc("lm");
+  wireAttachmentInput("lm");
   document.getElementById("lmClose").addEventListener("click", closeModal);
   document.getElementById("lmCancel").addEventListener("click", closeModal);
   document.getElementById("lmSave").addEventListener("click", async () => {
@@ -1242,12 +1328,9 @@ function openLandlordModal(landlordId = null) {
     const err = validateLandlord(data);
     if (err) { toast(err, "error"); return; }
 
-    if (isEdit) {
-      Object.assign(existing, data, { updatedAt: new Date().toISOString() });
-    } else {
-      DB.landlords.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-    }
-    const ok = await saveCollection("landlords");
+    const ok = isEdit
+      ? await updateLandlordSafe(existing.id, data)
+      : await addLandlordSafe(data);
     if (ok) {
       toast(isEdit ? "Landlord updated" : "Landlord saved");
       closeModal();
@@ -1505,6 +1588,7 @@ function renderFreshData() {
 
   if (uiState.freshDataFormOpen) {
     wireCommissionAutoCalc("qe");
+    wireAttachmentInput("qe");
 
     document.getElementById("qeClear").addEventListener("click", () => renderFreshData());
 
@@ -1512,8 +1596,7 @@ function renderFreshData() {
       const data = readLandlordForm("qe");
       const err = validateLandlord(data);
       if (err) { toast(err, "error"); return; }
-      DB.landlords.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-      const ok = await saveCollection("landlords");
+      const ok = await addLandlordSafe(data);
       if (ok) {
         toast(`Saved ${data.name} — ready for next entry`);
         renderNav();
@@ -1527,8 +1610,7 @@ function renderFreshData() {
       const data = readLandlordForm("qe");
       const err = validateLandlord(data);
       if (err) { toast(err, "error"); return; }
-      DB.landlords.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-      const ok = await saveCollection("landlords");
+      const ok = await addLandlordSafe(data);
       if (ok) {
         toast(`Saved ${data.name}`);
         uiState.freshDataFormOpen = false;
@@ -1543,11 +1625,10 @@ function renderFreshData() {
   el.querySelectorAll("[data-mail]").forEach(x => x.addEventListener("click", () => openConsentEmailModal(x.dataset.mail)));
   el.querySelectorAll("[data-copyphone]").forEach(x => x.addEventListener("click", () => copyPhoneNumber(x.dataset.copyphone, "landlord")));
   el.querySelectorAll("[data-status-change]").forEach(x => x.addEventListener("change", async () => {
-    const landlord = DB.landlords.find(l => l.id === x.dataset.statusChange);
-    landlord.status = x.value;
-    landlord.updatedAt = new Date().toISOString();
-    const ok = await saveCollection("landlords");
-    if (ok) { toast(`Status updated to "${x.value}"`); renderNav(); renderFreshData(); }
+    const newStatus = x.value;
+    const id = x.dataset.statusChange;
+    const ok = await updateLandlordSafe(id, { status: newStatus });
+    if (ok) { toast(`Status updated to "${newStatus}"`); renderNav(); renderFreshData(); }
   }));
   el.querySelectorAll("[data-del]").forEach(x => x.addEventListener("click", () => {
     const landlord = DB.landlords.find(l => l.id === x.dataset.del);
@@ -1857,11 +1938,9 @@ function renderTenants() {
   el.querySelectorAll("[data-temail]").forEach(x => x.addEventListener("click", (e) => { e.stopPropagation(); openTenantEmailModal(x.dataset.temail); }));
   el.querySelectorAll("[data-tcopyphone]").forEach(x => x.addEventListener("click", (e) => { e.stopPropagation(); copyPhoneNumber(x.dataset.tcopyphone, "tenant"); }));
   el.querySelectorAll("[data-tstatus-change]").forEach(x => x.addEventListener("change", async () => {
-    const tenant = DB.tenants.find(t => t.id === x.dataset.tstatusChange);
-    tenant.status = x.value;
-    tenant.updatedAt = new Date().toISOString();
-    const ok = await saveCollection("tenants");
-    if (ok) { toast(`Status updated to "${x.value}"`); renderTenants(); }
+    const newStatus = x.value;
+    const ok = await updateTenantSafe(x.dataset.tstatusChange, { status: newStatus });
+    if (ok) { toast(`Status updated to "${newStatus}"`); renderTenants(); }
   }));
   el.querySelectorAll("[data-tdel]").forEach(x => x.addEventListener("click", () => {
     const tenant = DB.tenants.find(t => t.id === x.dataset.tdel);
@@ -2304,6 +2383,7 @@ async function init() {
   }
   document.getElementById("loadingScreen").style.display = "none";
   document.getElementById("app").style.display = "flex";
+  startAutoRefresh();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
