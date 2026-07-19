@@ -1277,6 +1277,7 @@ function openLandlordModal(landlordId = null) {
   `);
 
   wireCommissionAutoCalc("lm");
+  wireAttachmentInput("lm");
   document.getElementById("lmClose").addEventListener("click", closeModal);
   document.getElementById("lmCancel").addEventListener("click", closeModal);
   document.getElementById("lmSave").addEventListener("click", async () => {
@@ -1284,12 +1285,9 @@ function openLandlordModal(landlordId = null) {
     const err = validateLandlord(data);
     if (err) { toast(err, "error"); return; }
 
-    if (isEdit) {
-      Object.assign(existing, data, { updatedAt: new Date().toISOString() });
-    } else {
-      DB.landlords.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-    }
-    const ok = await saveCollection("landlords");
+    const ok = isEdit
+      ? await updateLandlordSafe(existing.id, data)
+      : await addLandlordSafe(data);
     if (ok) {
       toast(isEdit ? "Landlord updated" : "Landlord saved");
       closeModal();
