@@ -617,13 +617,14 @@ document.getElementById("signOutBtn").addEventListener("click", async () => {
 /* ---------------------------------------------------------------------
    CONSTANTS
 --------------------------------------------------------------------- */
-const STATUSES = ["Fresh Data", "Confirmed", "Call Back", "VoiceMail", "Not Interested", "Rejection", "Received"];
+const STATUSES = ["Fresh Data", "Confirmed", "Call Back", "VoiceMail", "Not Answered", "Not Interested", "Rejection", "Received"];
 
 const STATUS_CLASS = {
   "Fresh Data": "badge-freshdata",
   "Confirmed": "badge-confirmed",
   "Call Back": "badge-callback",
   "VoiceMail": "badge-voicemail",
+  "Not Answered": "badge-notanswered",
   "Not Interested": "badge-notinterested",
   "Rejection": "badge-rejection",
   "Received": "badge-received"
@@ -640,6 +641,7 @@ const DEFAULT_TEMPLATES = {
   "Confirmed": "Hi {{name}}, great news — everything is now confirmed on our end. We'll keep you updated every step of the way.",
   "Call Back": "Hi {{name}}, we tried to reach you earlier. When would be a good time for us to call you back?",
   "VoiceMail": "Hi {{name}}, this is CrestPoint Management. We left you a voicemail — please call us back at your earliest convenience or reply here so we can assist further.",
+  "Not Answered": "Hi {{name}}, this is CrestPoint Management. We tried calling but couldn't reach you. Please let us know a good time to call you back.",
   "Not Interested": "Hi {{name}}, thank you for letting us know. If anything changes in future, we'd be happy to help. Wishing you all the best.",
   "Rejection": "Hi {{name}}, thank you for your patience. Unfortunately we're unable to proceed at this time. Please don't hesitate to reach out if anything changes.",
   "Received": "Hi {{name}}, we can confirm we've received the information we needed. Thank you — we'll be in touch shortly with next steps."
