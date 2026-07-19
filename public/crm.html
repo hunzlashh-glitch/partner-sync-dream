@@ -814,7 +814,7 @@ async function updateTenantSafe(id, patch) {
 function startAutoRefresh() {
   setInterval(async () => {
     if (document.hidden) return;
-    if (document.querySelector(".modal-backdrop.open")) return; // don't clobber open modals
+    if (document.getElementById("activeModalOverlay")) return; // don't clobber open modals
     const before = JSON.stringify(DB.landlords) + JSON.stringify(DB.tenants);
     await loadAll();
     const after = JSON.stringify(DB.landlords) + JSON.stringify(DB.tenants);
