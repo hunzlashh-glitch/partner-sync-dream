@@ -1547,6 +1547,7 @@ function renderFreshData() {
 
   if (uiState.freshDataFormOpen) {
     wireCommissionAutoCalc("qe");
+    wireAttachmentInput("qe");
 
     document.getElementById("qeClear").addEventListener("click", () => renderFreshData());
 
@@ -1554,8 +1555,7 @@ function renderFreshData() {
       const data = readLandlordForm("qe");
       const err = validateLandlord(data);
       if (err) { toast(err, "error"); return; }
-      DB.landlords.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-      const ok = await saveCollection("landlords");
+      const ok = await addLandlordSafe(data);
       if (ok) {
         toast(`Saved ${data.name} — ready for next entry`);
         renderNav();
@@ -1569,8 +1569,7 @@ function renderFreshData() {
       const data = readLandlordForm("qe");
       const err = validateLandlord(data);
       if (err) { toast(err, "error"); return; }
-      DB.landlords.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-      const ok = await saveCollection("landlords");
+      const ok = await addLandlordSafe(data);
       if (ok) {
         toast(`Saved ${data.name}`);
         uiState.freshDataFormOpen = false;
@@ -1585,11 +1584,10 @@ function renderFreshData() {
   el.querySelectorAll("[data-mail]").forEach(x => x.addEventListener("click", () => openConsentEmailModal(x.dataset.mail)));
   el.querySelectorAll("[data-copyphone]").forEach(x => x.addEventListener("click", () => copyPhoneNumber(x.dataset.copyphone, "landlord")));
   el.querySelectorAll("[data-status-change]").forEach(x => x.addEventListener("change", async () => {
-    const landlord = DB.landlords.find(l => l.id === x.dataset.statusChange);
-    landlord.status = x.value;
-    landlord.updatedAt = new Date().toISOString();
-    const ok = await saveCollection("landlords");
-    if (ok) { toast(`Status updated to "${x.value}"`); renderNav(); renderFreshData(); }
+    const newStatus = x.value;
+    const id = x.dataset.statusChange;
+    const ok = await updateLandlordSafe(id, { status: newStatus });
+    if (ok) { toast(`Status updated to "${newStatus}"`); renderNav(); renderFreshData(); }
   }));
   el.querySelectorAll("[data-del]").forEach(x => x.addEventListener("click", () => {
     const landlord = DB.landlords.find(l => l.id === x.dataset.del);
