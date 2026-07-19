@@ -779,6 +779,49 @@ async function saveCollection(name) {
   }
 }
 
+/* Read-modify-write helpers to avoid stale overwrites between partners/tabs.
+   Always fetches the latest landlords array from the DB first, applies the
+   change on the fresh copy, then saves. */
+async function reloadLandlords() {
+  const r = await window.storage.get("landlords", true);
+  if (r && r.value) {
+    try { DB.landlords = JSON.parse(r.value) || []; } catch (e) { /* keep */ }
+  }
+}
+async function updateLandlordSafe(id, patch) {
+  await reloadLandlords();
+  const idx = DB.landlords.findIndex(l => l.id === id);
+  if (idx === -1) { toast("This record no longer exists", "error"); return false; }
+  DB.landlords[idx] = { ...DB.landlords[idx], ...patch, updatedAt: new Date().toISOString() };
+  return await saveCollection("landlords");
+}
+async function addLandlordSafe(data) {
+  await reloadLandlords();
+  DB.landlords.push({ id: uid(), ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  return await saveCollection("landlords");
+}
+async function updateTenantSafe(id, patch) {
+  const r = await window.storage.get("tenants", true);
+  if (r && r.value) { try { DB.tenants = JSON.parse(r.value) || []; } catch (e) {} }
+  const idx = DB.tenants.findIndex(t => t.id === id);
+  if (idx === -1) { toast("This record no longer exists", "error"); return false; }
+  DB.tenants[idx] = { ...DB.tenants[idx], ...patch, updatedAt: new Date().toISOString() };
+  return await saveCollection("tenants");
+}
+
+/* Background refresh — pulls latest data every 15s so both partners
+   see each other's changes without a full page reload. */
+function startAutoRefresh() {
+  setInterval(async () => {
+    if (document.hidden) return;
+    if (document.querySelector(".modal-backdrop.open")) return; // don't clobber open modals
+    const before = JSON.stringify(DB.landlords) + JSON.stringify(DB.tenants);
+    await loadAll();
+    const after = JSON.stringify(DB.landlords) + JSON.stringify(DB.tenants);
+    if (before !== after) { renderNav(); renderCurrentView(); }
+  }, 15000);
+}
+
 /* ---------------------------------------------------------------------
    ICONS (inline SVG, feather-style, stroke based)
 --------------------------------------------------------------------- */
