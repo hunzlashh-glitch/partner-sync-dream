@@ -1938,11 +1938,9 @@ function renderTenants() {
   el.querySelectorAll("[data-temail]").forEach(x => x.addEventListener("click", (e) => { e.stopPropagation(); openTenantEmailModal(x.dataset.temail); }));
   el.querySelectorAll("[data-tcopyphone]").forEach(x => x.addEventListener("click", (e) => { e.stopPropagation(); copyPhoneNumber(x.dataset.tcopyphone, "tenant"); }));
   el.querySelectorAll("[data-tstatus-change]").forEach(x => x.addEventListener("change", async () => {
-    const tenant = DB.tenants.find(t => t.id === x.dataset.tstatusChange);
-    tenant.status = x.value;
-    tenant.updatedAt = new Date().toISOString();
-    const ok = await saveCollection("tenants");
-    if (ok) { toast(`Status updated to "${x.value}"`); renderTenants(); }
+    const newStatus = x.value;
+    const ok = await updateTenantSafe(x.dataset.tstatusChange, { status: newStatus });
+    if (ok) { toast(`Status updated to "${newStatus}"`); renderTenants(); }
   }));
   el.querySelectorAll("[data-tdel]").forEach(x => x.addEventListener("click", () => {
     const tenant = DB.tenants.find(t => t.id === x.dataset.tdel);
