@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      authorized_users: {
+        Row: {
+          added_at: string
+          email: string | null
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          email?: string | null
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          email?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       kv_store: {
         Row: {
           key: string
@@ -40,7 +58,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_authorized_user: { Args: { _uid: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
